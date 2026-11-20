@@ -21,7 +21,7 @@
   <rect width="1440" height="1676" rx="20" fill="url(#grid)"/>
 
 <rect x="40" y="38" width="6" height="28" rx="3" fill="#0bbbe7" stroke="none"/>
-<text x="60" y="59" font-size="20" fill="#055668" font-weight="700" text-anchor="start">vrp-1  /  PsiAI</text>
+<text x="60" y="59" font-size="20" fill="#055668" font-weight="700" text-anchor="start">vrp-1</text>
 <text x="1400" y="58" font-size="16" fill="#56727e" font-weight="600" text-anchor="end">PRODUCT BLUEPRINT / WORKFLOW &amp; WORKSPACES</text>
 <text x="40" y="113" font-size="36" fill="#153c4a" font-weight="700" text-anchor="start">Connect complex planning to actual execution.</text>
 <text x="40" y="148" font-size="19" fill="#56727e" font-weight="400" text-anchor="start">Multiple scenarios · rich constraints · real roads · explained candidates · fact-driven replanning</text>

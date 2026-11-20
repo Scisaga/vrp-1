@@ -57,7 +57,7 @@ class Diagram:
 
     def header(self, kicker, title, subtitle):
         self.rect(40, 38, 6, 28, CYAN, 'none', 3)
-        self.text(60, 59, 'vrp-1  /  PsiAI', 20, TEAL, 700)
+        self.text(60, 59, 'vrp-1', 20, TEAL, 700)
         self.text(1400, 58, kicker, 16, MUTED, 600, 'end')
         self.text(40, 113, title, 36, INK, 700)
         self.text(40, 148, subtitle, 19, MUTED)
