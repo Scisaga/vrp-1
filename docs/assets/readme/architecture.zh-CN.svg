@@ -1,0 +1,106 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="1060"
+  viewBox="0 0 1440 1060" role="img" aria-labelledby="title desc" xml:lang="zh-CN">
+  <title id="title">vrp-1 技术架构与计算边界</title>
+  <desc id="desc">工作台与业务系统通过 HTTP 访问 vrp-server。应用层负责持久化、调度、路网和离线底图。vrp-worker 通过 Protobuf IPC 运行隔离求解；CLI 也可直接调用 vrp-model。模型层完成校验和编译后进入仅依赖标准库的 vrp-core。契约唯一来源为 proto 下的文件。</desc>
+  <defs>
+    <pattern id="grid" width="24" height="24" patternUnits="userSpaceOnUse">
+      <circle cx="1" cy="1" r=".8" fill="#d7e4e9"/>
+    </pattern>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M1 1 9 5 1 9" fill="none" stroke="#055668" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+    <marker id="feedback" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M1 1 9 5 1 9" fill="none" stroke="#bd5d13" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+  </defs>
+  <style>
+    text { font-family: 'Segoe UI', 'Microsoft YaHei', 'Noto Sans CJK SC', sans-serif; }
+    .mono { font-family: Consolas, 'DejaVu Sans Mono', monospace; }
+  </style>
+  <rect width="1440" height="1060" rx="20" fill="#f3f8fa"/>
+  <rect width="1440" height="1060" rx="20" fill="url(#grid)"/>
+
+<rect x="40" y="38" width="6" height="28" rx="3" fill="#0bbbe7" stroke="none"/>
+<text x="60" y="59" font-size="20" fill="#055668" font-weight="700" text-anchor="start">vrp-1  /  PsiAI</text>
+<text x="1400" y="58" font-size="16" fill="#56727e" font-weight="600" text-anchor="end">技术架构  /  RUNTIME &amp; DATA FLOW</text>
+<text x="40" y="113" font-size="36" fill="#153c4a" font-weight="700" text-anchor="start">纯计算内核，完整的应用外层</text>
+<text x="40" y="148" font-size="19" fill="#56727e" font-weight="400" text-anchor="start">主要调用与数据流；应用层承担网络、文件、持久化与进程管理。</text>
+<rect x="40" y="182" width="1360" height="72" rx="10" fill="#e5f3f8" stroke="#bbdbe6"/>
+<text x="64" y="212" font-size="13" fill="#055668" font-weight="700" text-anchor="start">唯一契约源</text>
+<text x="64" y="239" font-size="21" fill="#055668" font-weight="600" text-anchor="start" class="mono">proto/**/*.proto</text>
+<path d="M370 218 H440" fill="none" stroke="#055668" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<text x="466" y="216" font-size="22" fill="#055668" font-weight="600" text-anchor="start" class="mono">vrp-proto</text>
+<text x="466" y="239" font-size="16" fill="#56727e" font-weight="400" text-anchor="start">Prost 类型 + ProtoJSON，由 .proto 生成</text>
+<text x="1376" y="213" font-size="16" fill="#055668" font-weight="500" text-anchor="end" class="mono">engine  /  worker  /  app  /  maps</text>
+<text x="1376" y="239" font-size="16" fill="#56727e" font-weight="400" text-anchor="end">HTTP · IPC · 冻结请求 / 结果</text>
+<text x="40" y="298" font-size="16" fill="#56727e" font-weight="600" text-anchor="start">01 / 接入入口</text>
+<text x="1080" y="298" font-size="16" fill="#56727e" font-weight="600" text-anchor="start">03 / 应用资源</text>
+<rect x="356" y="280" width="680" height="424" rx="14" fill="#eaf2f5" stroke="#c7dce4"/>
+<text x="380" y="310" font-size="16" fill="#055668" font-weight="600" text-anchor="start">02 / 独立应用与隔离进程</text>
+<rect x="40" y="336" width="272" height="110" rx="12" fill="white" stroke="#d7e4e9"/>
+<text x="60" y="369" font-size="22" fill="#153c4a" font-weight="600" text-anchor="start">浏览器工作台</text>
+<text x="60" y="399" font-size="16" fill="#56727e" font-weight="400" text-anchor="start">ES Modules · MapLibre</text>
+<text x="60" y="425" font-size="15" fill="#56727e" font-weight="400" text-anchor="start">HTTP · 内嵌界面资源</text>
+<rect x="40" y="474" width="272" height="110" rx="12" fill="white" stroke="#d7e4e9"/>
+<text x="60" y="507" font-size="22" fill="#153c4a" font-weight="600" text-anchor="start">业务系统</text>
+<text x="60" y="537" font-size="16" fill="#56727e" font-weight="400" text-anchor="start">Protobuf / ProtoJSON</text>
+<text x="60" y="563" font-size="15" fill="#56727e" font-weight="400" text-anchor="start">提交任务 · 进度 · 结果</text>
+<rect x="40" y="612" width="272" height="110" rx="12" fill="white" stroke="#d7e4e9"/>
+<text x="60" y="645" font-size="22" fill="#153c4a" font-weight="600" text-anchor="start">vrp CLI</text>
+<text x="60" y="675" font-size="16" fill="#56727e" font-weight="400" text-anchor="start">solve · solve-isolated</text>
+<text x="60" y="701" font-size="15" fill="#56727e" font-weight="400" text-anchor="start">eval · bench</text>
+<rect x="384" y="336" width="624" height="138" rx="12" fill="white" stroke="#d7e4e9"/>
+<text x="408" y="372" font-size="25" fill="#055668" font-weight="700" text-anchor="start" class="mono">vrp-server</text>
+<rect x="786" y="350" width="198" height="32" rx="6" fill="#e9f7fb" stroke="none"/>
+<text x="885.0" y="372" font-size="16" fill="#055668" font-weight="600" text-anchor="middle">Axum · Tokio</text>
+<text x="408" y="407" font-size="18" fill="#153c4a" font-weight="400" text-anchor="start">HTTP API · 场景版本 · 执行投影 · 重排 / 采用</text>
+<text x="408" y="442" font-size="18" fill="#56727e" font-weight="400" text-anchor="start">有界 FIFO · 共享资源额度 · 任务事件与进度</text>
+<rect x="384" y="540" width="280" height="136" rx="12" fill="white" stroke="#d7e4e9"/>
+<text x="408" y="575" font-size="22" fill="#055668" font-weight="600" text-anchor="start" class="mono">vrp-worker</text>
+<text x="408" y="610" font-size="17" fill="#153c4a" font-weight="400" text-anchor="start">Supervisor + 隔离求解进程</text>
+<text x="408" y="642" font-size="16" fill="#56727e" font-weight="400" text-anchor="start">进度 · 取消 · 内存限制</text>
+<rect x="700" y="540" width="308" height="136" rx="12" fill="white" stroke="#d7e4e9"/>
+<text x="724" y="575" font-size="22" fill="#055668" font-weight="600" text-anchor="start" class="mono">vrp-geo</text>
+<text x="724" y="610" font-size="17" fill="#153c4a" font-weight="400" text-anchor="start">路网进程 · PBF · 局部构图</text>
+<text x="724" y="642" font-size="16" fill="#56727e" font-weight="400" text-anchor="start">道路矩阵 · 路径 · 来源标记</text>
+<rect x="1080" y="336" width="320" height="138" rx="12" fill="white" stroke="#d7e4e9"/>
+<text x="1104" y="371" font-size="22" fill="#153c4a" font-weight="600" text-anchor="start">SQLite WAL + 本地文件</text>
+<text x="1104" y="407" font-size="17" fill="#56727e" font-weight="400" text-anchor="start">版本 · 任务 · 执行历史</text>
+<text x="1104" y="440" font-size="16" fill="#56727e" font-weight="400" text-anchor="start">冻结输入 / 结果 · 地理产物</text>
+<rect x="1080" y="540" width="320" height="136" rx="12" fill="white" stroke="#d7e4e9"/>
+<text x="1104" y="575" font-size="22" fill="#055668" font-weight="600" text-anchor="start" class="mono">vrp-basemap</text>
+<text x="1104" y="610" font-size="17" fill="#153c4a" font-weight="400" text-anchor="start">PMTiles 提取 / 验证 · 内置资源</text>
+<text x="1104" y="642" font-size="16" fill="#56727e" font-weight="400" text-anchor="start">仅用于显示，与路网计算分离</text>
+<path d="M312 389 H384" fill="none" stroke="#055668" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<path d="M312 529 H334 V433 H384" fill="none" stroke="#055668" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<path d="M1008 402 H1080" fill="none" stroke="#055668" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<path d="M524 474 V540" fill="none" stroke="#055668" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<rect x="444" y="496" width="160" height="26" rx="2" fill="#eaf2f5" stroke="none"/>
+<text x="524" y="515" font-size="14" fill="#055668" font-weight="600" text-anchor="middle">Protobuf IPC</text>
+<path d="M854 474 V540" fill="none" stroke="#055668" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<text x="875" y="514" font-size="14" fill="#56727e" font-weight="400" text-anchor="start">地理任务</text>
+<path d="M1008 448 H1058 V608 H1080" fill="none" stroke="#055668" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<path d="M312 667 H348 V608 H384" fill="none" stroke="#055668" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<rect x="356" y="754" width="1044" height="238" rx="14" fill="#e5f3f6" stroke="#b9d6e0"/>
+<text x="792" y="785" font-size="16" fill="#055668" font-weight="600" text-anchor="start">04 / 输入编译与求解</text>
+<rect x="384" y="810" width="318" height="150" rx="12" fill="white" stroke="#d7e4e9"/>
+<text x="408" y="849" font-size="25" fill="#055668" font-weight="600" text-anchor="start" class="mono">vrp-model</text>
+<text x="408" y="886" font-size="18" fill="#153c4a" font-weight="400" text-anchor="start">校验 · 未知边估算 · 编译</text>
+<text x="408" y="922" font-size="17" fill="#56727e" font-weight="400" text-anchor="start">协议 ↔ 内部模型 / 结果</text>
+<rect x="768" y="810" width="604" height="150" rx="10" fill="#153c4a" stroke="none"/>
+<text x="792" y="849" font-size="25" fill="white" font-weight="700" text-anchor="start" class="mono">vrp-core</text>
+<rect x="1212" y="828" width="136" height="32" rx="6" fill="#285362" stroke="none"/>
+<text x="1280.0" y="850" font-size="15" fill="#a4e9fa" font-weight="600" text-anchor="middle">STD ONLY</text>
+<text x="792" y="887" font-size="18" fill="#e6f3f7" font-weight="400" text-anchor="start">多线程搜索 · 路线级增量评分 · 独立全量 oracle</text>
+<text x="792" y="926" font-size="17" fill="#a9d5e1" font-weight="400" text-anchor="start">无 I/O · 无 async · 无全局状态 · 不依赖协议层</text>
+<path d="M524 676 V810" fill="none" stroke="#055668" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<rect x="432" y="722" width="184" height="26" rx="2" fill="#f3f8fa" stroke="none"/>
+<text x="524" y="741" font-size="15" fill="#055668" font-weight="600" text-anchor="middle" class="mono">SolveRequest</text>
+<path d="M176 722 V885 H384" fill="none" stroke="#055668" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<rect x="182" y="797" width="154" height="28" rx="2" fill="#f3f8fa" stroke="none"/>
+<text x="194" y="817" font-size="16" fill="#56727e" font-weight="400" text-anchor="start">直接调用</text>
+<path d="M702 884 H768" fill="none" stroke="#055668" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<text x="735" y="865" font-size="13" fill="#055668" font-weight="500" text-anchor="middle">模型</text>
+<text x="40" y="1030" font-size="16" fill="#56727e" font-weight="400" text-anchor="start">实线：主要调用 / 数据流，非完整 crate 依赖图。</text>
+<text x="1400" y="1030" font-size="16" fill="#055668" font-weight="500" text-anchor="end">计算内核边界以 docs/architecture.md 为准</text>
+</svg>

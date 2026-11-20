@@ -1,0 +1,61 @@
+syntax = "proto3";
+package vrp.maps.v1;
+
+// WGS84 non-wrapping bounds; antimeridian areas contain two rectangles.
+message Bounds { double west = 1; double south = 2; double east = 3; double north = 4; }
+message SourceSnapshot {
+  string url = 1; string key = 2; string version = 3; string etag = 4;
+  uint64 size_bytes = 5; string published = 6;
+}
+message BasemapContext {
+  // Exactly one of scenario_id, job_id, operation_id; version is the scenario
+  // version or operation revision (0 means current for the read-only selection).
+  string scenario_id = 1; uint64 version = 2; string job_id = 3; string operation_id = 4;
+}
+message PrepareBasemapRequest {
+  BasemapContext context = 1; repeated Bounds bounds = 2;
+  // 0 = 14. Automatic requests cannot exceed 14; explicit requests may use 15.
+  uint32 native_max_zoom = 3; bool automatic = 4; bool force_update = 5;
+  string idempotency_key = 6; string name = 7;
+  string estimate_task_id = 8;
+}
+message BasemapEstimate {
+  repeated Bounds bounds = 1; uint32 native_max_zoom = 2;
+  uint64 transfer_bytes = 3; uint64 package_bytes = 4;
+  uint64 disk_peak_bytes = 5; SourceSnapshot source = 6;
+}
+message ImportBasemapRequest { string path = 1; string name = 2; }
+message PackageRequest { string package_id = 1; }
+message EnableBasemapRequest { string package_id = 1; uint64 expected_version = 2; bool enabled = 3; }
+message ListBasemapsRequest { uint32 page_size = 1; string after_id = 2; }
+enum PackageState { PACKAGE_STATE_READY = 0; PACKAGE_STATE_DISABLED = 1; }
+message BasemapPackage {
+  string id = 1; string name = 2; repeated Bounds bounds = 3;
+  uint32 native_min_zoom = 4; uint32 native_max_zoom = 5;
+  string format = 6; uint64 size_bytes = 7; string sha256 = 8;
+  SourceSnapshot source = 9; string assets_version = 10; uint64 version = 11;
+  bool enabled = 12; PackageState state = 13; string task_id = 14;
+  int64 created_unix_ms = 15; uint64 reference_count = 16;
+  string attribution = 17; repeated string references = 18;
+}
+message ListBasemapsResponse { repeated BasemapPackage packages = 1; string next_after_id = 2; uint64 used_bytes = 3; uint64 limit_bytes = 4; }
+message BasemapSelection {
+  BasemapContext context = 1; repeated Bounds bounds = 2;
+  BasemapPackage package = 3; string task_id = 4; string status = 5;
+  bool automatic = 6; bool custom = 7; bool disabled = 8;
+  uint32 display_max_zoom = 9; string style_url = 10; string standard_style_url = 11;
+  string archive_url = 12; string message = 13;
+  bool selected = 14;
+  string bound_package_id = 15;
+}
+message SetBasemapSelectionRequest { BasemapContext context = 1; string package_id = 2; string expected_package_id = 3; }
+message BasemapReference { string key = 1; BasemapContext context = 2; }
+// Trusted task input. Filesystem paths/source settings are populated by the server,
+// not accepted as unvalidated generic-task submissions.
+message BasemapTaskInput {
+  PrepareBasemapRequest request = 1; repeated Bounds bounds = 2;
+  SourceSnapshot source = 3; string import_path = 4; string reuse_path = 5;
+  uint64 transfer_limit = 6; uint64 output_limit = 7; string selection_key = 8;
+  bool estimate_only = 9;
+  repeated BasemapReference waiting_selections = 10;
+}

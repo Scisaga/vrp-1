@@ -1,0 +1,9 @@
+[package]
+name = "vrp-core"
+description = "求解内核：内部表示、评分（约束集 v2）、搜索。只依赖标准库。"
+version.workspace = true
+edition.workspace = true
+publish.workspace = true
+license.workspace = true
+
+[dependencies]

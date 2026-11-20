@@ -1,0 +1,18 @@
+[package]
+name = "vrp-proto"
+description = "由 proto/ 生成的契约类型"
+version.workspace = true
+edition.workspace = true
+publish.workspace = true
+license.workspace = true
+
+[dependencies]
+prost.workspace = true
+serde = "1"
+pbjson = "0.9"
+
+[build-dependencies]
+prost-build.workspace = true
+protox.workspace = true
+prost.workspace = true
+pbjson-build = "0.9"

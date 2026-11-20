@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" type="image/svg+xml" href="/brand.svg?v=2" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>vrp-1 · 规划与调度</title>
+    <link rel="stylesheet" href="/style.css" />
+    <link rel="stylesheet" href="/vendor/maplibre-gl.css" />
+    <script src="/vendor/pmtiles.js"></script>
+    <script src="/app.js" type="module"></script>
+  </head>
+  <body>
+    <svg class="icon-sprite" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+      <defs>
+        <symbol id="icon-scenes" viewBox="0 0 24 24"><path d="m12 3 9 5-9 5-9-5 9-5Zm-9 9 9 5 9-5M3 16l9 5 9-5"/></symbol>
+        <symbol id="icon-tasks" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2"/><path d="M9 2v4m6-4v4M9 18v4m6-4v4M2 9h4m-4 6h4M18 9h4m-4 6h4"/><path d="M9 10h6v4H9z"/></symbol>
+        <symbol id="icon-settings" viewBox="0 0 24 24"><path d="M4 6h6m4 0h6M4 12h10m4 0h2M4 18h2m4 0h10"/><circle cx="12" cy="6" r="2"/><circle cx="16" cy="12" r="2"/><circle cx="8" cy="18" r="2"/></symbol>
+        <symbol id="icon-data" viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v7c0 4 16 4 16 0V5M4 12v7c0 4 16 4 16 0v-7"/></symbol>
+        <symbol id="icon-route" viewBox="0 0 24 24"><circle cx="5" cy="5" r="2"/><circle cx="19" cy="19" r="2"/><path d="M7 5h8a4 4 0 0 1 0 8H9a3 3 0 0 0 0 6h8"/></symbol>
+        <symbol id="icon-navigation" viewBox="0 0 24 24"><path d="m21 3-7 18-3-8-8-3L21 3Z"/></symbol>
+        <symbol id="icon-history" viewBox="0 0 24 24"><path d="M3 4v5h5M3.5 9a9 9 0 1 1 0 6"/><path d="M12 7v5l3 2"/></symbol>
+        <symbol id="icon-gantt" viewBox="0 0 24 24"><path d="M4 3v18h17M8 6h6m-3 5h9M8 16h9"/></symbol>
+        <symbol id="icon-inbox" viewBox="0 0 24 24"><path d="m3 13 3-9h12l3 9v7H3v-7Z"/><path d="M3 13h6l1 3h4l1-3h6M9 9h6"/></symbol>
+        <symbol id="icon-shield" viewBox="0 0 24 24"><path d="m12 3 8 3v6c0 5-8 9-8 9s-8-4-8-9V6l8-3Z"/><path d="M12 8v5m0 3v.1"/></symbol>
+        <symbol id="icon-alert" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v6m0 4v.1"/></symbol>
+        <symbol id="icon-clipboard" viewBox="0 0 24 24"><path d="M9 4H6a2 2 0 0 0-2 2v14h16V6a2 2 0 0 0-2-2h-3"/><rect x="9" y="2" width="6" height="4" rx="1"/><path d="M8 11h8m-8 5h8"/></symbol>
+        <symbol id="icon-team" viewBox="0 0 24 24"><circle cx="9" cy="7" r="3"/><path d="M3 21v-3a6 6 0 0 1 12 0v3M16 4a3 3 0 0 1 0 6m2 5a5 5 0 0 1 3 5v1"/></symbol>
+        <symbol id="icon-pin" viewBox="0 0 24 24"><path d="M20 10c0 6-8 11-8 11S4 16 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="3"/></symbol>
+        <symbol id="icon-matrix" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18m6-18v18M3 9h18M3 15h18"/></symbol>
+        <symbol id="icon-scale" viewBox="0 0 24 24"><path d="M12 3v18m-4 0h8M4 6h16M5 6l-4 8h8L5 6Zm14 0-4 8h8l-4-8Z"/><path d="M1 14c0 4 8 4 8 0m6 0c0 4 8 4 8 0"/></symbol>
+        <symbol id="icon-code" viewBox="0 0 24 24"><path d="m8 6-6 6 6 6m8-12 6 6-6 6M14 4l-4 16"/></symbol>
+      </defs>
+    </svg>
+    <header class="app-header">
+      <button class="brand" data-nav="scenes" aria-label="vrp-1 场景管理">
+        <img class="brand-symbol" src="/brand.svg?v=2" width="36" height="36" alt="" aria-hidden="true" />
+        <span>vrp-1<small>规划与调度</small></span>
+      </button>
+      <nav class="global-nav" aria-label="主导航">
+        <button data-nav="scenes"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#icon-scenes"/></svg><span>场景</span></button>
+        <button data-nav="roads"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#icon-route"/></svg><span>路网包管理</span></button>
+        <button data-nav="tasks"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#icon-tasks"/></svg><span>任务中心</span></button>
+        <button data-nav="settings"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#icon-settings"/></svg><span>服务设置</span></button>
+      </nav>
+      <span id="health" class="connection">连接中</span
+      ><button id="connect" class="quiet">访问设置</button>
+    </header>
+    <div id="notice" role="status" aria-live="polite" aria-atomic="true" hidden>
+      <span id="notice-icon" aria-hidden="true"></span>
+      <span id="notice-text"></span>
+      <button id="notice-close" type="button" aria-label="关闭通知" title="关闭通知">×</button>
+    </div>
+    <div class="app-layout">
+      <aside id="sidebar">
+        <div class="sidebar-title">
+          <span>调度场景</span>
+          <div class="sidebar-actions">
+            <button id="new-scene" class="icon-button" title="新建场景" aria-label="新建场景">
+              <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M8 2v12M2 8h12"/></svg>
+            </button>
+            <button id="import-scene" class="icon-button" title="导入场景" aria-label="导入场景">
+              <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M8 2v8m-3-3 3 3 3-3M2.5 10.5v3h11v-3"/></svg>
+            </button>
+          </div>
+        </div>
+        <input
+          id="scene-search"
+          type="search"
+          placeholder="搜索场景名称"
+          aria-label="搜索场景"
+        />
+        <nav id="scenes" aria-label="切换场景"></nav>
+        <button id="more-scenes" class="quiet wide" hidden>加载更多场景</button>
+      </aside>
+      <main id="main">
+        <section id="global-content" hidden></section>
+        <section id="scene-content" hidden>
+          <div class="scene-heading">
+            <div class="scene-identity">
+              <h1 id="scene-title"></h1>
+              <span id="scene-context" class="scene-phase"></span>
+              <span id="scene-subtitle" class="scene-clock" hidden></span>
+            </div>
+            <nav id="workspace-tabs" class="workspace-tabs" role="tablist" aria-label="场景工作区">
+              <button id="workspace-tab-data" data-tab="data" role="tab" aria-controls="workspace-content"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#icon-data"/></svg><span>数据与规则</span></button>
+              <button id="workspace-tab-plans" data-tab="plans" role="tab" aria-controls="workspace-content"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#icon-route"/></svg><span>规划方案</span></button>
+              <button id="workspace-tab-operations" data-tab="operations" role="tab" aria-controls="workspace-content"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#icon-navigation"/></svg><span>执行调度</span></button>
+              <button id="workspace-tab-history" data-tab="history" role="tab" aria-controls="workspace-content"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#icon-history"/></svg><span>历史记录</span></button>
+            </nav>
+            <div id="scene-actions" class="actions"></div>
+          </div>
+          <div id="workspace-status"></div>
+          <section id="workspace-content" role="tabpanel"></section>
+        </section>
+        <div id="initial-loading" class="empty-state">
+          <span class="spinner"></span>
+          <h2>正在读取场景</h2>
+          <p>准备您的规划与调度工作区</p>
+        </div>
+      </main>
+    </div>
+    <dialog id="dialog" aria-labelledby="dialog-title" aria-describedby="dialog-context">
+      <form id="dialog-form">
+        <div class="dialog-header">
+          <div class="dialog-heading">
+            <h2 id="dialog-title"></h2>
+            <small id="dialog-context"></small>
+          </div>
+          <button
+            type="button"
+            id="dialog-close"
+            class="window-close"
+            aria-label="关闭"
+            title="关闭（Esc）"
+          >
+            ×
+          </button>
+        </div>
+        <div id="dialog-body">
+          <div id="dialog-fields"></div>
+          <p id="dialog-error" class="error-text" role="alert" hidden></p>
+        </div>
+        <div class="dialog-actions">
+          <small id="dialog-hint"></small>
+          <button type="button" id="dialog-cancel">取消</button
+          ><button type="submit" class="primary" id="dialog-submit">
+            确定
+          </button>
+        </div>
+      </form>
+    </dialog>
+  </body>
+</html>

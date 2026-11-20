@@ -1,0 +1,15 @@
+[package]
+name = "vrp-geo"
+description = "Offline OSM preparation and approximate road routing"
+version.workspace = true
+edition.workspace = true
+publish.workspace = true
+license.workspace = true
+
+[dependencies]
+osmpbf = "0.3.8"
+rstar = "0.13"
+geo = "0.31"
+serde = { version = "1", features = ["derive"] }
+serde_json = { workspace = true, features = ["float_roundtrip"] }
+sha2 = "0.10"

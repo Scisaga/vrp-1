@@ -1,0 +1,37 @@
+/target
+/var
+__pycache__/
+# 私有语料及其导出物不进仓库（见 AGENTS.md）
+*.pb
+/corpus/*
+!/corpus/.gitkeep
+/reports/
+/research_notes/
+/docs/benchmarks/**/source.zip
+.env
+.env.*
+!.env.example
+!.env.sample
+
+# 本地开发缓存与编译产物
+.venv/
+.pytest_cache/
+*.py[cod]
+*.class
+*.jar
+*.exe
+*.dll
+
+# 运行日志与本地数据库
+*.log
+*.sqlite
+*.sqlite-*
+*.sqlite3
+*.sqlite3-*
+*.db
+*.db-*
+
+# 操作系统生成的本地文件
+.DS_Store
+Thumbs.db
+desktop.ini

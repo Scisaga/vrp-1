@@ -1,0 +1,413 @@
+syntax = "proto3";
+
+package vrp.engine.v1;
+
+// vrp-1 引擎契约（约束集 v2 语义，见 docs/constraints-v2.md）。
+//
+// 约定：
+// - 时间一律是相对 Horizon 起点的秒（int64），引擎内不做日历和时区计算；
+// - 实体之间的引用一律用下标（locations / agents / tickets 中的位置），id 只用于对外标识；
+// - 容量、需求、金额都已整数化，单位由生产方声明；
+// - seed 固定随机序列；墙钟时限及多线程调度不保证最终方案逐次完全相同。
+
+// 一次求解的完整输入。
+message SolveRequest {
+  Problem problem = 1;
+  SolveOptions options = 2;
+  // 可选的初始解（热启动），例如上一版计划。为空时从零构造。
+  Solution initial_solution = 3;
+}
+
+enum SolvePreset {
+  SOLVE_PRESET_FAST = 0;      // 默认：总求解时限 30 秒。
+  SOLVE_PRESET_STANDARD = 1;  // 总求解时限 120 秒。
+  SOLVE_PRESET_DEEP = 2;      // 连续 300 秒无更优解时停止，默认不设总时限。
+}
+
+enum SearchStrategy {
+  SEARCH_STRATEGY_NEAREST = 0;
+  SEARCH_STRATEGY_BASELINE = 1;
+  SEARCH_STRATEGY_ALPHA = 2;
+  SEARCH_STRATEGY_ALPHA_K_OPT = 3;
+}
+
+message SolveOptions {
+  // 正值覆盖档位的总求解时限（毫秒）；0 沿用档位设置。
+  // 从实际开始求解时计时，不包含排队、地图准备及请求编译。
+  uint64 time_limit_ms = 1;
+  // 单任务求解线程数；0 视为 1。所有任务的线程合计受机器总额度约束。
+  uint32 threads = 2;
+  uint64 seed = 3;
+  // 正值覆盖档位的连续无改进时限（毫秒）；0 沿用档位设置。
+  // 多线程共享全局最佳分数，每次严格改善时重新计时，等分不重置。
+  // 与总时限同时设置时，任一条件达到即停止。
+  uint64 unimproved_stop_ms = 4;
+  // 未指定时为 FAST。具体默认值见 SolvePreset。
+  SolvePreset preset = 5;
+  // NEAREST 保留原默认搜索，其他策略用于按相同预算比较。
+  SearchStrategy search_strategy = 6;
+  // 单次换边（含子环修补）删除的原路线边数上限，0 使用 5；非零范围 2..12。
+  uint32 k_opt_depth = 7;
+}
+
+message Problem {
+  // 调用方提供的任务标识，引擎不解释。
+  string id = 1;
+  Horizon horizon = 2;
+  repeated Location locations = 3;
+  // 每个车型 profile 一张矩阵，Agent.matrix 指定用哪张。
+  // 为空时全部边由 fallback 估算（只建议用于离线实验）。
+  repeated TravelMatrix matrices = 4;
+  repeated CapacityDimension capacity_dimensions = 5;
+  repeated Agent agents = 6;
+  repeated Ticket tickets = 7;
+  // 关联工单：两张工单应由同一个 agent 服务。无序对，重复的对只算一次。
+  repeated TicketPair related_pairs = 8;
+  // 前置依赖 DAG：first 是 second 的前置；多个前置全部完成后才开始，可跨 agent。
+  // 重复边去重，自引用/环拒绝。启用时序约束时自动等待并传播时间；不推导同 agent。
+  repeated TicketPair precedences = 9;
+  ConstraintWeights weights = 10;
+  CostParameters costs = 11;
+  FallbackEstimator fallback = 12;
+  // 估算边的排班余量。为空时用默认值（见 EstimateBuffer）。
+  EstimateBuffer estimate_buffer = 13;
+  // Optional real execution boundary; absent preserves static semantics.
+  ExecutionContext execution = 14;
+}
+
+message ExecutionContext {
+  repeated ExecutedRoute routes = 1;
+  repeated ExecutionTicket tickets = 2;
+  repeated PastDependency past_dependencies = 3;
+}
+message LoadVector { repeated int64 values = 1; }
+message ExecutedRoute {
+  uint32 agent = 1;
+  // Presence means actual load, including an explicitly empty/zero load.
+  LoadVector initial_load = 2;
+  uint32 completed_tickets = 3;
+  int64 worked_seconds = 4;
+  repeated int64 delivered = 5;
+  bool fixed_cost_paid = 6;
+  bool unavailable = 7;
+  bool must_return = 8;
+  // Exact prefix of remaining ticket indices; these tickets must also be pinned.
+  repeated uint32 locked_prefix = 9;
+}
+message ExecutionTicket {
+  uint32 ticket = 1;
+  optional uint32 only_agent = 2;
+  bool blocked = 3;
+  bool auxiliary = 4;
+  // Physical pickup/load prerequisite: same route, earlier than this ticket.
+  optional uint32 load_before = 5;
+  optional uint32 original_position = 6;
+  optional int64 original_start = 7;
+  optional int64 committed_earliest = 8;
+  optional int64 committed_latest = 9;
+}
+message PastDependency {
+  uint32 ticket = 1;
+  uint32 agent = 2;
+  int64 finished_at = 3;
+  bool same_agent = 4;
+  bool after_finish = 5;
+  bool related = 6; // Same-agent comparison uses relation_tickets_same_agent.
+}
+
+message Horizon {
+  // 第 0 天本地零点的 Unix 时间戳（秒），只用于把结果换算回绝对时间。
+  int64 start_unix = 1;
+  // IANA 时区名，例如 Asia/Shanghai，只用于展示。
+  string timezone = 2;
+  // 第 i 天的起点（秒），严格递增且第 0 项为 0。
+  // 为空时按每天 86400 秒划分；计划跨夏令时切换时必须显式给出。
+  repeated int64 day_starts = 3;
+  // 第 0 天零点的本地时间文本，例如 "2025-06-21T00:00:00"，只用于展示。
+  string start_local = 4;
+}
+
+message Location {
+  string id = 1;
+  double lng = 2;
+  double lat = 3;
+}
+
+// n×n 行主序矩阵（n = locations 数），第 from 行第 to 列。
+//
+// durations / distances 中的保留值：
+//   0xFFFFFFFF  不可达：路线经过这条边时计 unreachable_leg；
+//   0xFFFFFFFE  未知：vrp-1 编译时用 fallback 补齐，来源记为 EDGE_SOURCE_FALLBACK。
+// 同一条边的 durations 与 distances 必须同为保留值或同为正常值。
+message TravelMatrix {
+  // 车型 profile 名（car / truck / e_bike ...），只用于展示。
+  string profile = 1;
+  // 行驶时长（秒），n*n 个小端 u32。
+  bytes durations = 2;
+  // 行驶距离（米），n*n 个小端 u32。
+  bytes distances = 3;
+  // 可选：每条边 1 字节的 EdgeSource。为空表示全部是 EDGE_SOURCE_EXACT。
+  // 估算边（MODEL / FALLBACK）推算时刻时加余量，见 EstimateBuffer。
+  bytes sources = 4;
+}
+
+enum EdgeSource {
+  EDGE_SOURCE_EXACT = 0;    // 图商实测
+  EDGE_SOURCE_CACHED = 1;   // 缓存命中
+  EDGE_SOURCE_MODEL = 2;    // 模型估算
+  EDGE_SOURCE_FALLBACK = 3; // vrp-1 几何兜底估算
+}
+
+message CapacityDimension {
+  // 例如 weight、volume。
+  string name = 1;
+  // 整数化后的单位说明，例如 g、mL。
+  string unit = 2;
+  // 超载罚分的计数单位：超出量按它向上取整计数。0 视为 1。
+  int64 penalty_unit = 3;
+}
+
+// 一个工程师或车辆在一天里的一条路线（对应 v1 的 AgentEachDay）。
+// 同一个工程师 / 车辆的多天对应多个 Agent。
+message Agent {
+  string id = 1;
+  // 物理工程师 / 车辆标识。核心只用于展示和统计；独立应用据此管理执行资源归属。
+  string resource_id = 2;
+  // Horizon 日序号。
+  int32 day = 3;
+  uint32 start_location = 4;
+  uint32 end_location = 5;
+  // 出发时刻。
+  int64 start_time = 6;
+  // 班次结束时刻：路线结束（回到终点）晚于它时计 agent_shift_overtime。
+  // 为空表示不限；静态输入给出时不得早于 start_time。
+  // execution 输入允许班次已结束，按剩余路线计算超时。
+  optional int64 end_time = 7;
+  // 与 capacity_dimensions 对齐，缺省按 0。
+  repeated int64 capacity = 8;
+  // 各维度允许的超载千分比，例如 v1 max_overload_ratio = 1.2 对应重量维 200。
+  repeated uint32 capacity_tolerance_permille = 9;
+  // 最大接单数；0 = 不限。
+  uint32 max_tickets = 10;
+  // 使用该 agent（至少派 1 单）时的固定成本。
+  int64 fixed_cost = 11;
+  // 限行车辆：按行驶时长加收 CostParameters.restricted_charge_per_hour。
+  bool restricted = 12;
+  repeated string skills = 13;
+  map<string, double> qualification_levels = 14;
+  string depot_id = 15;
+  // Problem.matrices 的下标。
+  uint32 matrix = 16;
+}
+
+enum TicketType {
+  TICKET_TYPE_SERVICE = 0;  // 上门服务 / 安装（v1 Inst），不改变载荷
+  TICKET_TYPE_DELIVERY = 1; // 配送：静态路线默认起点装车；execution 使用显式实际载荷
+  TICKET_TYPE_PICKUP = 2;   // 取件 / 返仓（v1 Delv_BH）：到站装货，带回终点
+}
+
+message Ticket {
+  string id = 1;
+  uint32 location = 2;
+  TicketType type = 3;
+  // 服务时长（秒）。
+  int64 duration = 4;
+  // 最早开始服务时刻，早到需等待。
+  int64 earliest_start = 5;
+  // 晚于此时刻开始服务，计 ticket_start_service_time_match_expected。
+  int64 latest_start = 6;
+  // 晚于此时刻结束服务，计 service_finished_after_max_end_time。
+  int64 latest_end = 7;
+  // 计划服务日（Horizon 日序号）。
+  int32 day = 8;
+  // 与 capacity_dimensions 对齐，缺省按 0。
+  repeated int64 demand = 9;
+  repeated string skills_required = 10;
+  map<string, double> qualification_required = 11;
+  string depot_id = 12;
+  // 上一版已发布计划里的 agent 下标；为空表示新工单。
+  optional uint32 original_agent = 13;
+  // 必须指派给 original_agent，不能未派或改派（路线内顺序仍可调整）。
+  // 显式 initial_solution 违反此规则时拒绝输入；不提供初始解时由构造阶段放入。
+  bool pinned = 14;
+}
+
+message TicketPair {
+  uint32 first = 1;
+  uint32 second = 2;
+}
+
+// 一条约束的权重：匹配量 × 权重计入对应级别。
+message Weight {
+  int64 hard = 1;
+  int64 medium = 2;
+  int64 soft = 3;
+}
+
+// 字段未设置时取默认权重（见 docs/constraints-v2.md）；显式设置为全 0 表示关闭。
+message ConstraintWeights {
+  Weight agent_capacity = 1;
+  Weight agent_max_ticket = 2;
+  Weight agent_skills_accord_with_ticket_skills = 3;
+  Weight agent_qualification_levels_match_ticket = 4;
+  Weight ref_ticket_after_dep_ticket = 5;
+  Weight ref_ticket_same_agent_with_dep_ticket = 6;
+  Weight service_finished_after_max_end_time = 7;
+  Weight ticket_start_service_time_match_expected = 8;
+  Weight ticket_arrival_time_same_date_with_plan_time = 9;
+  Weight relation_tickets_same_agent = 10;
+  Weight minimize_travel_time = 11;
+  Weight minimize_travel_distance = 12;
+  Weight minimize_agent_fixed_cost = 13;
+  Weight same_depo = 14;
+  Weight balance_agent_loading = 15;
+  Weight balance_agent_loading_ratio = 16;
+  Weight balance_agent_working_time = 17;
+  Weight minimize_ticket_changing = 18;
+  Weight ticket_unassigned = 19;
+  Weight unreachable_leg = 20;
+  Weight agent_shift_overtime = 21;
+  Weight execution_consistency = 22; // Execution contexts require exactly 1 hard.
+  Weight minimize_visit_order_changing = 23;
+  Weight minimize_service_time_changing = 24;
+}
+
+message CostParameters {
+  // 限行车辆每行驶 1 小时加收的费用（v1 time_restricted_traffic_charge）。
+  int64 restricted_charge_per_hour = 1;
+}
+
+// 矩阵里"未知"边的兜底估算。
+message FallbackEstimator {
+  enum Metric {
+    METRIC_MANHATTAN = 0;
+    METRIC_HAVERSINE = 1;
+  }
+  Metric metric = 1;
+  // 绕行系数（千分比）；0 视为 1000。
+  uint32 detour_permille = 2;
+  // 按距离分段的车速，取 min_distance_m 不超过实际距离的最大一档。为空时用默认分段。
+  repeated SpeedBand speed_bands = 3;
+}
+
+message SpeedBand {
+  uint32 min_distance_m = 1;
+  uint32 speed_kmh = 2;
+}
+
+// 估算边的排班余量：来源为 MODEL / FALLBACK 的边，推算到达时刻时按
+// ⌈时长 × (1000 + 千分比) / 1000⌉ 计，行驶成本仍按原时长。
+// Problem.estimate_buffer 为空时取默认值 MODEL 100、FALLBACK 200；
+// 给出时按字面值，0 表示不加余量。
+message EstimateBuffer {
+  // 千分比，取值 0 到 10000。
+  uint32 model_permille = 1;
+  uint32 fallback_permille = 2;
+}
+
+message Solution {
+  // 只列有工单的 agent；没有出现在任何 route 里的工单视为未派。
+  repeated Route routes = 1;
+}
+
+message Route {
+  uint32 agent = 1;
+  // 访问顺序。
+  repeated uint32 tickets = 2;
+}
+
+// 分数为罚分之和，各级别都 <= 0，按 hard、medium、soft 依次比较。
+message Score {
+  int64 hard = 1;
+  int64 medium = 2;
+  int64 soft = 3;
+}
+
+message SolveResult {
+  Solution solution = 1;
+  Score score = 2;
+  // 各约束汇总，只列权重非 0 的约束。
+  repeated ConstraintScore constraints = 3;
+  // 逐条计分明细，用于解释。
+  repeated ConstraintMatch matches = 4;
+  repeated RouteDetail routes = 5;
+  repeated UnassignedTicket unassigned = 6;
+  // 方案经过的 MODEL 和 FALLBACK 边，供调用方优先校正。
+  repeated Edge estimated_edges = 7;
+  SolveStats stats = 8;
+}
+
+message ConstraintScore {
+  string name = 1;
+  uint64 matches = 2;
+  Score score = 3;
+}
+
+message ConstraintMatch {
+  string constraint = 1;
+  repeated uint32 agents = 2;
+  repeated uint32 tickets = 3;
+  // 乘权重之前的量，例如超载量、迟到分钟数、行驶秒数。
+  int64 amount = 4;
+  Score score = 5;
+}
+
+message RouteDetail {
+  uint32 agent = 1;
+  repeated Stop stops = 2;
+  int64 travel_time = 3;
+  int64 travel_distance = 4;
+  // 回到终点的时刻（按含余量的排班时长推算）。
+  int64 end_time = 5;
+  repeated int64 peak_load = 6;
+}
+
+message Stop {
+  uint32 ticket = 1;
+  int64 arrival = 2;
+  int64 start = 3;
+  int64 end = 4;
+}
+
+message UnassignedTicket {
+  uint32 ticket = 1;
+  // 原因代码：no_eligible_agent、skills、qualification、depot、day、pinned 等。
+  repeated string reasons = 2;
+}
+
+message Edge {
+  uint32 matrix = 1;
+  uint32 from = 2;
+  uint32 to = 3;
+}
+
+message SolveStats {
+  uint64 elapsed_ms = 1;
+  uint64 best_found_ms = 2;
+  uint64 evaluated_moves = 3;
+  uint32 threads = 4;
+  uint64 seed = 5;
+  string engine_version = 6;
+  // time_limit、unimproved、cancelled 或 completed（空问题/没有 agent）。
+  string termination_reason = 7;
+  // 已完整升级为 alpha 候选的矩阵数；预算不足的矩阵保留近邻/全域探索。
+  uint32 alpha_profiles = 8;
+  // 上述已完成矩阵的节点罚值优化迭代次数。
+  uint32 ascent_iterations = 9;
+  uint64 preprocessing_ms = 10;
+  // k-opt 严格改善当前工作方案的次数，不等于全局最佳改善次数。
+  uint64 k_opt_improvements = 11;
+  // 对不连通的连续换边闭合尝试子环修补的次数（不含修补内部递归）。
+  uint64 patching_attempts = 12;
+  // 经子环修补后严格改善工作方案的次数，是 k_opt_improvements 的子集。
+  uint64 patched_improvements = 13;
+}
+
+// 求解中的进度。worker 心跳和 CLI 的 JSONL 输出共用。
+message Progress {
+  uint64 elapsed_ms = 1;
+  Score best_score = 2;
+  uint64 evaluated_moves = 3;
+  // 相对搜索起点的时刻，用于监督全局连续无改进时间。
+  uint64 best_found_ms = 4;
+}

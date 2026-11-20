@@ -1,0 +1,24 @@
+{
+  "format_version": 1,
+  "generator_seed": 7412026,
+  "seeds": [11, 29, 47, 71, 101],
+  "budget_ms": 30000,
+  "threads": 1,
+  "memory_mib": 2048,
+  "warmup_rounds": 3,
+  "warmup_ms": 20000,
+  "scenarios": [
+    {"id":"a01-basic-50", "suite":"common", "tickets":50, "agents":10, "layout":"grid", "features":[], "modes":["cold","continue"]},
+    {"id":"a02-dense-200", "suite":"common", "tickets":200, "agents":8, "layout":"dense", "features":[], "modes":["cold","continue"]},
+    {"id":"a03-regional-480", "suite":"common", "tickets":480, "agents":80, "layout":"regional", "features":["depots"], "modes":["cold","continue"]},
+    {"id":"a04-growth-1000", "suite":"common", "tickets":1000, "agents":100, "layout":"regional", "features":["heterogeneous"], "modes":["cold","continue"]},
+    {"id":"a05-skills-levels-200", "suite":"common", "tickets":200, "agents":20, "layout":"grid", "features":["skills","qualifications","capacity"], "modes":["cold","continue"]},
+    {"id":"a06-tight-wait-capacity-50", "suite":"common", "tickets":50, "agents":4, "layout":"grid", "features":["windows","capacity"], "modes":["cold","continue"]},
+    {"id":"b01-pickup-two-dimensions-200", "suite":"acceptance", "tickets":200, "agents":16, "layout":"regional", "features":["pickup","two_dimensions","capacity","shift"], "modes":["cold"]},
+    {"id":"b02-precedence-50", "suite":"acceptance", "tickets":50, "agents":6, "layout":"dense", "features":["precedence","windows","shift"], "modes":["cold"]},
+    {"id":"b03-execution-insert-200", "suite":"acceptance", "tickets":200, "agents":20, "layout":"grid", "features":["execution","insert","capacity","shift"], "modes":["execution"]},
+    {"id":"b04-execution-cancel-50", "suite":"acceptance", "tickets":50, "agents":6, "layout":"dense", "features":["execution","cancel","capacity","shift"], "modes":["execution"]},
+    {"id":"b05-fault-completed-lock-50", "suite":"acceptance", "tickets":50, "agents":6, "layout":"grid", "features":["execution","fault","completed","lock","capacity","shift"], "modes":["execution"]},
+    {"id":"b06-insufficient-unreachable-50", "suite":"acceptance", "tickets":50, "agents":2, "layout":"regional", "features":["capacity","conflict","unreachable"], "modes":["cold"], "known_infeasible":true}
+  ]
+}

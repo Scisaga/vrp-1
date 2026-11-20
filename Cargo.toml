@@ -1,0 +1,31 @@
+[workspace]
+resolver = "3"
+members = ["crates/*"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+publish = false
+license = "Apache-2.0"
+
+[workspace.dependencies]
+vrp-core = { path = "crates/vrp-core" }
+vrp-proto = { path = "crates/vrp-proto" }
+vrp-model = { path = "crates/vrp-model" }
+vrp-import-v1 = { path = "crates/vrp-import-v1" }
+vrp-worker = { path = "crates/vrp-worker" }
+vrp-geo = { path = "crates/vrp-geo" }
+vrp-basemap = { path = "crates/vrp-basemap" }
+prost = "0.14"
+prost-build = "0.14"
+protox = "0.10"
+serde_json = "1"
+
+[profile.release]
+codegen-units = 1
+lto = "thin"
+debug = "line-tables-only"
+
+# 依赖用优化编译，测试里的随机差分测试才跑得快。
+[profile.dev.package."*"]
+opt-level = 2

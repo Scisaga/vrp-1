@@ -1,0 +1,9 @@
+# Published evaluation evidence must retain the bytes used by its SHA-256 hashes.
+/docs/benchmarks/** -text whitespace=cr-at-eol
+
+# Generated plots are reviewed as images, with their original bytes intact.
+/docs/benchmarks/**/*.svg binary
+
+# These generators are themselves fingerprinted in the published evidence.
+/benchmarks/report.py -text whitespace=cr-at-eol
+/benchmarks/readme_figures.py -text

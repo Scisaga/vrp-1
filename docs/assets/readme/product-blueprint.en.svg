@@ -1,0 +1,449 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="1676"
+  viewBox="0 0 1440 1676" role="img" aria-labelledby="title desc" xml:lang="en">
+  <title id="title">vrp-1 product blueprint: complex planning through actual execution</title>
+  <desc id="desc">Five connected stages: model scenarios, prepare geography, inspect explained plans, validate adoption, and replan during execution. Details cover task dependencies, map packages, adoption boundaries, and version lineage. Saved scenarios, frozen input, candidates, published plans, and execution facts remain distinct.</desc>
+  <defs>
+    <pattern id="grid" width="24" height="24" patternUnits="userSpaceOnUse">
+      <circle cx="1" cy="1" r=".8" fill="#d7e4e9"/>
+    </pattern>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M1 1 9 5 1 9" fill="none" stroke="#055668" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+    <marker id="feedback" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M1 1 9 5 1 9" fill="none" stroke="#bd5d13" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+  </defs>
+  <style>
+    text { font-family: 'Segoe UI', 'Microsoft YaHei', 'Noto Sans CJK SC', sans-serif; }
+    .mono { font-family: Consolas, 'DejaVu Sans Mono', monospace; }
+  </style>
+  <rect width="1440" height="1676" rx="20" fill="#f3f8fa"/>
+  <rect width="1440" height="1676" rx="20" fill="url(#grid)"/>
+
+<rect x="40" y="38" width="6" height="28" rx="3" fill="#0bbbe7" stroke="none"/>
+<text x="60" y="59" font-size="20" fill="#055668" font-weight="700" text-anchor="start">vrp-1  /  PsiAI</text>
+<text x="1400" y="58" font-size="16" fill="#56727e" font-weight="600" text-anchor="end">PRODUCT BLUEPRINT / WORKFLOW &amp; WORKSPACES</text>
+<text x="40" y="113" font-size="36" fill="#153c4a" font-weight="700" text-anchor="start">Connect complex planning to actual execution.</text>
+<text x="40" y="148" font-size="19" fill="#56727e" font-weight="400" text-anchor="start">Multiple scenarios · rich constraints · real roads · explained candidates · fact-driven replanning</text>
+<rect x="40" y="184" width="1360" height="62" rx="10" fill="#e5f3f8" stroke="#bcdce6"/>
+<text x="64" y="222" font-size="17" fill="#055668" font-weight="700" text-anchor="start">GLOBAL WORKBENCH</text>
+<text x="405" y="222" font-size="20" fill="#055668" font-weight="600" text-anchor="middle">Scenarios</text>
+<text x="682" y="222" font-size="20" fill="#055668" font-weight="600" text-anchor="middle">Map packages</text>
+<text x="956" y="222" font-size="20" fill="#055668" font-weight="600" text-anchor="middle">Task center</text>
+<text x="1244" y="222" font-size="20" fill="#055668" font-weight="600" text-anchor="middle">Service settings</text>
+<text x="40" y="284" font-size="18" fill="#56727e" font-weight="600" text-anchor="start">WORKFLOW / Explicit input, adoption baselines, and execution facts</text>
+<rect x="40" y="310" width="256" height="360" rx="12" fill="white" stroke="#d7e4e9"/>
+<rect x="40" y="310" width="256" height="5" rx="2" fill="#0bbbe7" stroke="none"/>
+<text x="60" y="347" font-size="17" fill="#055668" font-weight="700" text-anchor="start" class="mono">01</text>
+<text x="102" y="347" font-size="13" fill="#56727e" font-weight="600" text-anchor="start">MODEL</text>
+<text x="60" y="385" font-size="22" fill="#153c4a" font-weight="700" text-anchor="start">Model scenarios</text>
+<rect x="60" y="405" width="216" height="112" rx="8" fill="#f0f6f8" stroke="none"/>
+<circle cx="63" cy="546" r="2.5" fill="#0bbbe7" stroke="none" stroke-width="1"/>
+<text x="74" y="552" font-size="15" fill="#153c4a" font-weight="400" text-anchor="start">Orders / units / locations</text>
+<circle cx="63" cy="575" r="2.5" fill="#0bbbe7" stroke="none" stroke-width="1"/>
+<text x="74" y="581" font-size="15" fill="#153c4a" font-weight="400" text-anchor="start">Windows / capacities</text>
+<circle cx="63" cy="604" r="2.5" fill="#0bbbe7" stroke="none" stroke-width="1"/>
+<text x="74" y="610" font-size="15" fill="#153c4a" font-weight="400" text-anchor="start">Skills / levels / depots</text>
+<circle cx="63" cy="633" r="2.5" fill="#0bbbe7" stroke="none" stroke-width="1"/>
+<text x="74" y="639" font-size="15" fill="#153c4a" font-weight="400" text-anchor="start">Prerequisites / related orders</text>
+<path d="M299 385 h14" fill="none" stroke="#055668" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<rect x="316" y="310" width="256" height="360" rx="12" fill="white" stroke="#d7e4e9"/>
+<rect x="316" y="310" width="256" height="5" rx="2" fill="#0bbbe7" stroke="none"/>
+<text x="336" y="347" font-size="17" fill="#055668" font-weight="700" text-anchor="start" class="mono">02</text>
+<text x="378" y="347" font-size="13" fill="#56727e" font-weight="600" text-anchor="start">GEO</text>
+<text x="336" y="385" font-size="22" fill="#153c4a" font-weight="700" text-anchor="start">Prepare geography</text>
+<rect x="336" y="405" width="216" height="112" rx="8" fill="#f0f6f8" stroke="none"/>
+<circle cx="339" cy="546" r="2.5" fill="#0bbbe7" stroke="none" stroke-width="1"/>
+<text x="350" y="552" font-size="15" fill="#153c4a" font-weight="400" text-anchor="start">Road matrices / geometry</text>
+<circle cx="339" cy="575" r="2.5" fill="#0bbbe7" stroke="none" stroke-width="1"/>
+<text x="350" y="581" font-size="15" fill="#153c4a" font-weight="400" text-anchor="start">Provenance / quality flags</text>
+<circle cx="339" cy="604" r="2.5" fill="#0bbbe7" stroke="none" stroke-width="1"/>
+<text x="350" y="610" font-size="15" fill="#153c4a" font-weight="400" text-anchor="start">Separate offline basemaps</text>
+<circle cx="339" cy="633" r="2.5" fill="#0bbbe7" stroke="none" stroke-width="1"/>
+<text x="350" y="639" font-size="15" fill="#153c4a" font-weight="400" text-anchor="start">Shared cache / versions</text>
+<path d="M575 385 h14" fill="none" stroke="#055668" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<rect x="592" y="310" width="256" height="360" rx="12" fill="white" stroke="#d7e4e9"/>
+<rect x="592" y="310" width="256" height="5" rx="2" fill="#0bbbe7" stroke="none"/>
+<text x="612" y="347" font-size="17" fill="#055668" font-weight="700" text-anchor="start" class="mono">03</text>
+<text x="654" y="347" font-size="13" fill="#56727e" font-weight="600" text-anchor="start">PLAN</text>
+<text x="612" y="385" font-size="22" fill="#153c4a" font-weight="700" text-anchor="start">Plan and explain</text>
+<rect x="612" y="405" width="216" height="112" rx="8" fill="#f0f6f8" stroke="none"/>
+<circle cx="615" cy="546" r="2.5" fill="#0bbbe7" stroke="none" stroke-width="1"/>
+<text x="626" y="552" font-size="15" fill="#153c4a" font-weight="400" text-anchor="start">Parallel search / warm start</text>
+<circle cx="615" cy="575" r="2.5" fill="#0bbbe7" stroke="none" stroke-width="1"/>
+<text x="626" y="581" font-size="15" fill="#153c4a" font-weight="400" text-anchor="start">Linked Gantt and map</text>
+<circle cx="615" cy="604" r="2.5" fill="#0bbbe7" stroke="none" stroke-width="1"/>
+<text x="626" y="610" font-size="15" fill="#153c4a" font-weight="400" text-anchor="start">Unassigned / penalties / risks</text>
+<circle cx="615" cy="633" r="2.5" fill="#0bbbe7" stroke="none" stroke-width="1"/>
+<text x="626" y="639" font-size="15" fill="#153c4a" font-weight="400" text-anchor="start">Compare / adjust plans</text>
+<path d="M851 385 h14" fill="none" stroke="#055668" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<rect x="868" y="310" width="256" height="360" rx="12" fill="white" stroke="#d7e4e9"/>
+<rect x="868" y="310" width="256" height="5" rx="2" fill="#ff992f" stroke="none"/>
+<text x="888" y="347" font-size="17" fill="#bd5d13" font-weight="700" text-anchor="start" class="mono">04</text>
+<text x="930" y="347" font-size="13" fill="#56727e" font-weight="600" text-anchor="start">ADOPT</text>
+<text x="888" y="385" font-size="22" fill="#153c4a" font-weight="700" text-anchor="start">Validate and adopt</text>
+<rect x="888" y="405" width="216" height="112" rx="8" fill="#f0f6f8" stroke="none"/>
+<circle cx="891" cy="546" r="2.5" fill="#e58a38" stroke="none" stroke-width="1"/>
+<text x="902" y="552" font-size="15" fill="#153c4a" font-weight="400" text-anchor="start">Business / execution baseline</text>
+<circle cx="891" cy="575" r="2.5" fill="#e58a38" stroke="none" stroke-width="1"/>
+<text x="902" y="581" font-size="15" fill="#153c4a" font-weight="400" text-anchor="start">Load / capacity / reachability</text>
+<circle cx="891" cy="604" r="2.5" fill="#e58a38" stroke="none" stroke-width="1"/>
+<text x="902" y="610" font-size="15" fill="#153c4a" font-weight="400" text-anchor="start">Dependencies / commitments</text>
+<circle cx="891" cy="633" r="2.5" fill="#e58a38" stroke="none" stroke-width="1"/>
+<text x="902" y="639" font-size="15" fill="#153c4a" font-weight="400" text-anchor="start">Review / optional auto-adopt</text>
+<path d="M1127 385 h14" fill="none" stroke="#055668" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<rect x="1144" y="310" width="256" height="360" rx="12" fill="white" stroke="#d7e4e9"/>
+<rect x="1144" y="310" width="256" height="5" rx="2" fill="#ff992f" stroke="none"/>
+<text x="1164" y="347" font-size="17" fill="#bd5d13" font-weight="700" text-anchor="start" class="mono">05</text>
+<text x="1206" y="347" font-size="13" fill="#56727e" font-weight="600" text-anchor="start">OPERATE</text>
+<text x="1164" y="385" font-size="22" fill="#153c4a" font-weight="700" text-anchor="start">Execute and replan</text>
+<rect x="1164" y="405" width="216" height="112" rx="8" fill="#f0f6f8" stroke="none"/>
+<circle cx="1167" cy="546" r="2.5" fill="#e58a38" stroke="none" stroke-width="1"/>
+<text x="1178" y="552" font-size="15" fill="#153c4a" font-weight="400" text-anchor="start">Depart / arrive / serve / finish</text>
+<circle cx="1167" cy="575" r="2.5" fill="#e58a38" stroke="none" stroke-width="1"/>
+<text x="1178" y="581" font-size="15" fill="#153c4a" font-weight="400" text-anchor="start">Positions / cargo / actual loads</text>
+<circle cx="1167" cy="604" r="2.5" fill="#e58a38" stroke="none" stroke-width="1"/>
+<text x="1178" y="610" font-size="15" fill="#153c4a" font-weight="400" text-anchor="start">New / cancel / delay / faults</text>
+<circle cx="1167" cy="633" r="2.5" fill="#e58a38" stroke="none" stroke-width="1"/>
+<text x="1178" y="639" font-size="15" fill="#153c4a" font-weight="400" text-anchor="start">New remaining-work candidate</text>
+<path d="M76 447 H258" fill="none" stroke="#d7e4e9" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="76" y="438" font-size="12" fill="#055668" font-weight="400" text-anchor="start" class="mono">ORDER-021</text>
+<text x="176" y="438" font-size="12" fill="#56727e" font-weight="400" text-anchor="start">08:30</text>
+<circle cx="244" cy="434" r="4" fill="#0bbbe7" stroke="none" stroke-width="1"/>
+<path d="M76 475 H258" fill="none" stroke="#d7e4e9" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="76" y="466" font-size="12" fill="#055668" font-weight="400" text-anchor="start" class="mono">ORDER-022</text>
+<text x="176" y="466" font-size="12" fill="#56727e" font-weight="400" text-anchor="start">10:00</text>
+<circle cx="244" cy="462" r="4" fill="#56baa7" stroke="none" stroke-width="1"/>
+<path d="M76 503 H258" fill="none" stroke="#d7e4e9" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="76" y="494" font-size="12" fill="#055668" font-weight="400" text-anchor="start" class="mono">ORDER-023</text>
+<text x="176" y="494" font-size="12" fill="#56727e" font-weight="400" text-anchor="start">13:30</text>
+<circle cx="244" cy="490" r="4" fill="#e59b51" stroke="none" stroke-width="1"/>
+<defs><clipPath id="geo-map-clip"><rect x="336" y="405" width="216" height="112" rx="8"/></clipPath></defs>
+<g id="geo-illustration" clip-path="url(#geo-map-clip)">
+<title>Row i is the origin and column j is the destination. The marked cell gives the travel time from i to j. Three delivery routes appear on the map.</title>
+<g id="geo-basemap">
+<rect x="336" y="405" width="216" height="112" rx="8" fill="#eaf0ed" stroke="none"/>
+<rect x="344" y="411" width="28" height="23" rx="3" fill="#d4e6d8" stroke="none"/>
+<rect x="386" y="414" width="37" height="20" rx="3" fill="#d4e6d8" stroke="none"/>
+<rect x="496" y="412" width="37" height="24" rx="3" fill="#d4e6d8" stroke="none"/>
+<rect x="510" y="480" width="31" height="29" rx="3" fill="#d4e6d8" stroke="none"/>
+<path d="M467 405 C458 429 461 445 477 463 S493 493 486 517 H502 C511 490 505 473 491 456 S473 427 483 405 Z" fill="#b9dce7"/>
+<path d="M336 441 H416 L447 426 H552" fill="none" stroke="#c5d1cf" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M336 441 H416 L447 426 H552" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M336 485 H399 L421 470 H475 L514 451 H552" fill="none" stroke="#c5d1cf" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M336 485 H399 L421 470 H475 L514 451 H552" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M367 405 V442 L382 464 V517" fill="none" stroke="#c5d1cf" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M367 405 V442 L382 464 V517" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M424 405 V442 L437 462 V517" fill="none" stroke="#c5d1cf" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M424 405 V442 L437 462 V517" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M515 405 V435 L533 466 V517" fill="none" stroke="#c5d1cf" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M515 405 V435 L533 466 V517" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M336 507 H432 L463 493 H552" fill="none" stroke="#c5d1cf" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M336 507 H432 L463 493 H552" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M336 427 H366 L385 414 H424" fill="none" stroke="#c5d1cf" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M336 427 H366 L385 414 H424" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M483 405 V426 L501 443 H552" fill="none" stroke="#c5d1cf" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M483 405 V426 L501 443 H552" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M343 429 H355 L367 441 H416 L447 426 H515 V417 H541" fill="none" stroke="#fffdfa" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M343 429 H355 L367 441 H416 L447 426 H515 V417 H541" fill="none" stroke="#43816e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<circle cx="343" cy="429" r="2.5" fill="white" stroke="#43816e" stroke-width="1.4"/>
+<circle cx="416" cy="441" r="2.5" fill="white" stroke="#43816e" stroke-width="1.4"/>
+<circle cx="498" cy="426" r="2.5" fill="white" stroke="#43816e" stroke-width="1.4"/>
+<circle cx="541" cy="417" r="2.5" fill="white" stroke="#43816e" stroke-width="1.4"/>
+<path d="M344 500 H381 L399 485 L421 470 H453 L476 493 H513 L528 478" fill="none" stroke="#fffdfa" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M344 500 H381 L399 485 L421 470 H453 L476 493 H513 L528 478" fill="none" stroke="#ac744e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<circle cx="344" cy="500" r="2.5" fill="white" stroke="#ac744e" stroke-width="1.4"/>
+<circle cx="399" cy="485" r="2.5" fill="white" stroke="#ac744e" stroke-width="1.4"/>
+<circle cx="476" cy="493" r="2.5" fill="white" stroke="#ac744e" stroke-width="1.4"/>
+<circle cx="513" cy="493" r="2.5" fill="white" stroke="#ac744e" stroke-width="1.4"/>
+<path d="M346 466 L391 444 H442 L484 478 H528 L542 464" fill="none" stroke="#fffdfa" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M346 466 L391 444 H442 L484 478 H528 L542 464" fill="none" stroke="#536e89" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<circle cx="346" cy="466" r="2.5" fill="white" stroke="#536e89" stroke-width="1.4"/>
+<circle cx="391" cy="444" r="2.5" fill="white" stroke="#536e89" stroke-width="1.4"/>
+<circle cx="484" cy="478" r="2.5" fill="white" stroke="#536e89" stroke-width="1.4"/>
+<circle cx="542" cy="464" r="2.5" fill="white" stroke="#536e89" stroke-width="1.4"/>
+<path d="M528 474.5 l3.5 3.5 -3.5 3.5 -3.5 -3.5 Z" fill="white" stroke="#465d69" stroke-width="1.4"/>
+</g>
+<g id="geo-travel-matrix" transform="translate(383 413)">
+<rect x="0.0" y="0.0" width="7.5" height="7.5" rx="0.5" fill="#a2e1e7" fill-opacity="0.30"/>
+<rect x="8.5" y="0.0" width="7.5" height="7.5" rx="0.5" fill="#6cceda" fill-opacity="0.64"/>
+<rect x="17.0" y="0.0" width="7.5" height="7.5" rx="0.5" fill="#6cceda" fill-opacity="0.61"/>
+<rect x="25.5" y="0.0" width="7.5" height="7.5" rx="0.5" fill="#1498b2" fill-opacity="0.73"/>
+<rect x="34.0" y="0.0" width="7.5" height="7.5" rx="0.5" fill="#1498b2" fill-opacity="0.70"/>
+<rect x="42.5" y="0.0" width="7.5" height="7.5" rx="0.5" fill="#1498b2" fill-opacity="0.69"/>
+<rect x="51.0" y="0.0" width="7.5" height="7.5" rx="0.5" fill="#3db7cb" fill-opacity="0.68"/>
+<rect x="59.5" y="0.0" width="7.5" height="7.5" rx="0.5" fill="#1498b2" fill-opacity="0.72"/>
+<rect x="68.0" y="0.0" width="7.5" height="7.5" rx="0.5" fill="#1498b2" fill-opacity="0.75"/>
+<rect x="76.5" y="0.0" width="7.5" height="7.5" rx="0.5" fill="#077793" fill-opacity="0.80"/>
+<rect x="85.0" y="0.0" width="7.5" height="7.5" rx="0.5" fill="#045c78" fill-opacity="0.78"/>
+<rect x="93.5" y="0.0" width="7.5" height="7.5" rx="0.5" fill="#03475e" fill-opacity="0.89"/>
+<rect x="0.0" y="8.5" width="7.5" height="7.5" rx="0.5" fill="#6cceda" fill-opacity="0.63"/>
+<rect x="8.5" y="8.5" width="7.5" height="7.5" rx="0.5" fill="#a2e1e7" fill-opacity="0.30"/>
+<rect x="17.0" y="8.5" width="7.5" height="7.5" rx="0.5" fill="#6cceda" fill-opacity="0.62"/>
+<rect x="25.5" y="8.5" width="7.5" height="7.5" rx="0.5" fill="#3db7cb" fill-opacity="0.63"/>
+<rect x="34.0" y="8.5" width="7.5" height="7.5" rx="0.5" fill="#3db7cb" fill-opacity="0.68"/>
+<rect x="42.5" y="8.5" width="7.5" height="7.5" rx="0.5" fill="#1498b2" fill-opacity="0.70"/>
+<rect x="51.0" y="8.5" width="7.5" height="7.5" rx="0.5" fill="#3db7cb" fill-opacity="0.65"/>
+<rect x="59.5" y="8.5" width="7.5" height="7.5" rx="0.5" fill="#3db7cb" fill-opacity="0.70"/>
+<rect x="68.0" y="8.5" width="7.5" height="7.5" rx="0.5" fill="#3db7cb" fill-opacity="0.65"/>
+<rect x="76.5" y="8.5" width="7.5" height="7.5" rx="0.5" fill="#1498b2" fill-opacity="0.77"/>
+<rect x="85.0" y="8.5" width="7.5" height="7.5" rx="0.5" fill="#077793" fill-opacity="0.76"/>
+<rect x="93.5" y="8.5" width="7.5" height="7.5" rx="0.5" fill="#045c78" fill-opacity="0.78"/>
+<rect x="0.0" y="17.0" width="7.5" height="7.5" rx="0.5" fill="#6cceda" fill-opacity="0.66"/>
+<rect x="8.5" y="17.0" width="7.5" height="7.5" rx="0.5" fill="#6cceda" fill-opacity="0.61"/>
+<rect x="17.0" y="17.0" width="7.5" height="7.5" rx="0.5" fill="#a2e1e7" fill-opacity="0.30"/>
+<rect x="25.5" y="17.0" width="7.5" height="7.5" rx="0.5" fill="#3db7cb" fill-opacity="0.66"/>
+<rect x="34.0" y="17.0" width="7.5" height="7.5" rx="0.5" fill="#3db7cb" fill-opacity="0.63"/>
+<rect x="42.5" y="17.0" width="7.5" height="7.5" rx="0.5" fill="#3db7cb" fill-opacity="0.69"/>
+<rect x="51.0" y="17.0" width="7.5" height="7.5" rx="0.5" fill="#1498b2" fill-opacity="0.72"/>
+<rect x="59.5" y="17.0" width="7.5" height="7.5" rx="0.5" fill="#1498b2" fill-opacity="0.69"/>
+<rect x="68.0" y="17.0" width="7.5" height="7.5" rx="0.5" fill="#3db7cb" fill-opacity="0.68"/>
+<rect x="76.5" y="17.0" width="7.5" height="7.5" rx="0.5" fill="#1498b2" fill-opacity="0.72"/>
+<rect x="85.0" y="17.0" width="7.5" height="7.5" rx="0.5" fill="#077793" fill-opacity="0.79"/>
+<rect x="93.5" y="17.0" width="7.5" height="7.5" rx="0.5" fill="#045c78" fill-opacity="0.81"/>
+<rect x="0.0" y="25.5" width="7.5" height="7.5" rx="0.5" fill="#1498b2" fill-opacity="0.69"/>
+<rect x="8.5" y="25.5" width="7.5" height="7.5" rx="0.5" fill="#3db7cb" fill-opacity="0.68"/>
+<rect x="17.0" y="25.5" width="7.5" height="7.5" rx="0.5" fill="#3db7cb" fill-opacity="0.65"/>
+<rect x="25.5" y="25.5" width="7.5" height="7.5" rx="0.5" fill="#a2e1e7" fill-opacity="0.30"/>
+<rect x="34.0" y="25.5" width="7.5" height="7.5" rx="0.5" fill="#6cceda" fill-opacity="0.62"/>
+<rect x="42.5" y="25.5" width="7.5" height="7.5" rx="0.5" fill="#3db7cb" fill-opacity="0.65"/>
+<rect x="51.0" y="25.5" width="7.5" height="7.5" rx="0.5" fill="#1498b2" fill-opacity="0.75"/>
+<rect x="59.5" y="25.5" width="7.5" height="7.5" rx="0.5" fill="#1498b2" fill-opacity="0.72"/>
+<rect x="68.0" y="25.5" width="7.5" height="7.5" rx="0.5" fill="#3db7cb" fill-opacity="0.63"/>
+<rect x="76.5" y="25.5" width="7.5" height="7.5" rx="0.5" fill="#3db7cb" fill-opacity="0.68"/>
+<rect x="85.0" y="25.5" width="7.5" height="7.5" rx="0.5" fill="#3db7cb" fill-opacity="0.67"/>
+<rect x="93.5" y="25.5" width="7.5" height="7.5" rx="0.5" fill="#1498b2" fill-opacity="0.77"/>
+<rect x="0.0" y="34.0" width="7.5" height="7.5" rx="0.5" fill="#1498b2" fill-opacity="0.72"/>
+<rect x="8.5" y="34.0" width="7.5" height="7.5" rx="0.5" fill="#3db7cb" fill-opacity="0.63"/>
+<rect x="17.0" y="34.0" width="7.5" height="7.5" rx="0.5" fill="#3db7cb" fill-opacity="0.68"/>
+<rect x="25.5" y="34.0" width="7.5" height="7.5" rx="0.5" fill="#6cceda" fill-opacity="0.61"/>
+<rect x="34.0" y="34.0" width="7.5" height="7.5" rx="0.5" fill="#a2e1e7" fill-opacity="0.30"/>
+<rect x="42.5" y="34.0" width="7.5" height="7.5" rx="0.5" fill="#6cceda" fill-opacity="0.64"/>
+<rect x="51.0" y="34.0" width="7.5" height="7.5" rx="0.5" fill="#077793" fill-opacity="0.74"/>
+<rect x="59.5" y="34.0" width="7.5" height="7.5" rx="0.5" fill="#077793" fill-opacity="0.79"/>
+<rect x="68.0" y="34.0" width="7.5" height="7.5" rx="0.5" fill="#1498b2" fill-opacity="0.70"/>
+<rect x="76.5" y="34.0" width="7.5" height="7.5" rx="0.5" fill="#1498b2" fill-opacity="0.67"/>
+<rect x="85.0" y="34.0" width="7.5" height="7.5" rx="0.5" fill="#3db7cb" fill-opacity="0.70"/>
+<rect x="93.5" y="34.0" width="7.5" height="7.5" rx="0.5" fill="#1498b2" fill-opacity="0.72"/>
+<rect x="0.0" y="42.5" width="7.5" height="7.5" rx="0.5" fill="#1498b2" fill-opacity="0.69"/>
+<rect x="8.5" y="42.5" width="7.5" height="7.5" rx="0.5" fill="#1498b2" fill-opacity="0.72"/>
+<rect x="17.0" y="42.5" width="7.5" height="7.5" rx="0.5" fill="#3db7cb" fill-opacity="0.65"/>
+<rect x="25.5" y="42.5" width="7.5" height="7.5" rx="0.5" fill="#3db7cb" fill-opacity="0.69"/>
+<rect x="34.0" y="42.5" width="7.5" height="7.5" rx="0.5" fill="#6cceda" fill-opacity="0.63"/>
+<rect x="42.5" y="42.5" width="7.5" height="7.5" rx="0.5" fill="#a2e1e7" fill-opacity="0.30"/>
+<rect x="51.0" y="42.5" width="7.5" height="7.5" rx="0.5" fill="#045c78" fill-opacity="0.83"/>
+<rect x="59.5" y="42.5" width="7.5" height="7.5" rx="0.5" fill="#045c78" fill-opacity="0.80"/>
+<rect x="68.0" y="42.5" width="7.5" height="7.5" rx="0.5" fill="#077793" fill-opacity="0.79"/>
+<rect x="76.5" y="42.5" width="7.5" height="7.5" rx="0.5" fill="#077793" fill-opacity="0.76"/>
+<rect x="85.0" y="42.5" width="7.5" height="7.5" rx="0.5" fill="#1498b2" fill-opacity="0.67"/>
+<rect x="93.5" y="42.5" width="7.5" height="7.5" rx="0.5" fill="#1498b2" fill-opacity="0.74"/>
+<rect x="0.0" y="51.0" width="7.5" height="7.5" rx="0.5" fill="#3db7cb" fill-opacity="0.66"/>
+<rect x="8.5" y="51.0" width="7.5" height="7.5" rx="0.5" fill="#3db7cb" fill-opacity="0.65"/>
+<rect x="17.0" y="51.0" width="7.5" height="7.5" rx="0.5" fill="#1498b2" fill-opacity="0.74"/>
+<rect x="25.5" y="51.0" width="7.5" height="7.5" rx="0.5" fill="#1498b2" fill-opacity="0.71"/>
+<rect x="34.0" y="51.0" width="7.5" height="7.5" rx="0.5" fill="#077793" fill-opacity="0.79"/>
+<rect x="42.5" y="51.0" width="7.5" height="7.5" rx="0.5" fill="#045c78" fill-opacity="0.81"/>
+<rect x="51.0" y="51.0" width="7.5" height="7.5" rx="0.5" fill="#a2e1e7" fill-opacity="0.30"/>
+<rect x="59.5" y="51.0" width="7.5" height="7.5" rx="0.5" fill="#3db7cb" fill-opacity="0.66"/>
+<rect x="68.0" y="51.0" width="7.5" height="7.5" rx="0.5" fill="#6cceda" fill-opacity="0.61"/>
+<rect x="76.5" y="51.0" width="7.5" height="7.5" rx="0.5" fill="#1498b2" fill-opacity="0.73"/>
+<rect x="85.0" y="51.0" width="7.5" height="7.5" rx="0.5" fill="#1498b2" fill-opacity="0.72"/>
+<rect x="93.5" y="51.0" width="7.5" height="7.5" rx="0.5" fill="#077793" fill-opacity="0.75"/>
+<rect x="0.0" y="59.5" width="7.5" height="7.5" rx="0.5" fill="#1498b2" fill-opacity="0.77"/>
+<rect x="8.5" y="59.5" width="7.5" height="7.5" rx="0.5" fill="#3db7cb" fill-opacity="0.68"/>
+<rect x="17.0" y="59.5" width="7.5" height="7.5" rx="0.5" fill="#1498b2" fill-opacity="0.69"/>
+<rect x="25.5" y="59.5" width="7.5" height="7.5" rx="0.5" fill="#1498b2" fill-opacity="0.74"/>
+<rect x="34.0" y="59.5" width="7.5" height="7.5" rx="0.5" fill="#077793" fill-opacity="0.74"/>
+<rect x="42.5" y="59.5" width="7.5" height="7.5" rx="0.5" fill="#045c78" fill-opacity="0.84"/>
+<rect x="51.0" y="59.5" width="7.5" height="7.5" rx="0.5" fill="#3db7cb" fill-opacity="0.65"/>
+<rect x="59.5" y="59.5" width="7.5" height="7.5" rx="0.5" fill="#a2e1e7" fill-opacity="0.30"/>
+<rect x="68.0" y="59.5" width="7.5" height="7.5" rx="0.5" fill="#6cceda" fill-opacity="0.64"/>
+<rect x="76.5" y="59.5" width="7.5" height="7.5" rx="0.5" fill="#6cceda" fill-opacity="0.61"/>
+<rect x="85.0" y="59.5" width="7.5" height="7.5" rx="0.5" fill="#3db7cb" fill-opacity="0.71"/>
+<rect x="93.5" y="59.5" width="7.5" height="7.5" rx="0.5" fill="#1498b2" fill-opacity="0.70"/>
+<rect x="0.0" y="68.0" width="7.5" height="7.5" rx="0.5" fill="#1498b2" fill-opacity="0.71"/>
+<rect x="8.5" y="68.0" width="7.5" height="7.5" rx="0.5" fill="#3db7cb" fill-opacity="0.69"/>
+<rect x="17.0" y="68.0" width="7.5" height="7.5" rx="0.5" fill="#3db7cb" fill-opacity="0.66"/>
+<rect x="25.5" y="68.0" width="7.5" height="7.5" rx="0.5" fill="#3db7cb" fill-opacity="0.63"/>
+<rect x="34.0" y="68.0" width="7.5" height="7.5" rx="0.5" fill="#1498b2" fill-opacity="0.72"/>
+<rect x="42.5" y="68.0" width="7.5" height="7.5" rx="0.5" fill="#077793" fill-opacity="0.74"/>
+<rect x="51.0" y="68.0" width="7.5" height="7.5" rx="0.5" fill="#6cceda" fill-opacity="0.66"/>
+<rect x="59.5" y="68.0" width="7.5" height="7.5" rx="0.5" fill="#6cceda" fill-opacity="0.63"/>
+<rect x="68.0" y="68.0" width="7.5" height="7.5" rx="0.5" fill="#a2e1e7" fill-opacity="0.30"/>
+<rect x="76.5" y="68.0" width="7.5" height="7.5" rx="0.5" fill="#3db7cb" fill-opacity="0.66"/>
+<rect x="85.0" y="68.0" width="7.5" height="7.5" rx="0.5" fill="#3db7cb" fill-opacity="0.65"/>
+<rect x="93.5" y="68.0" width="7.5" height="7.5" rx="0.5" fill="#1498b2" fill-opacity="0.75"/>
+<rect x="0.0" y="76.5" width="7.5" height="7.5" rx="0.5" fill="#077793" fill-opacity="0.81"/>
+<rect x="8.5" y="76.5" width="7.5" height="7.5" rx="0.5" fill="#1498b2" fill-opacity="0.72"/>
+<rect x="17.0" y="76.5" width="7.5" height="7.5" rx="0.5" fill="#1498b2" fill-opacity="0.77"/>
+<rect x="25.5" y="76.5" width="7.5" height="7.5" rx="0.5" fill="#3db7cb" fill-opacity="0.66"/>
+<rect x="34.0" y="76.5" width="7.5" height="7.5" rx="0.5" fill="#1498b2" fill-opacity="0.67"/>
+<rect x="42.5" y="76.5" width="7.5" height="7.5" rx="0.5" fill="#077793" fill-opacity="0.77"/>
+<rect x="51.0" y="76.5" width="7.5" height="7.5" rx="0.5" fill="#1498b2" fill-opacity="0.69"/>
+<rect x="59.5" y="76.5" width="7.5" height="7.5" rx="0.5" fill="#6cceda" fill-opacity="0.66"/>
+<rect x="68.0" y="76.5" width="7.5" height="7.5" rx="0.5" fill="#3db7cb" fill-opacity="0.65"/>
+<rect x="76.5" y="76.5" width="7.5" height="7.5" rx="0.5" fill="#a2e1e7" fill-opacity="0.30"/>
+<rect x="85.0" y="76.5" width="7.5" height="7.5" rx="0.5" fill="#6cceda" fill-opacity="0.64"/>
+<rect x="93.5" y="76.5" width="7.5" height="7.5" rx="0.5" fill="#3db7cb" fill-opacity="0.63"/>
+<rect x="0.0" y="85.0" width="7.5" height="7.5" rx="0.5" fill="#045c78" fill-opacity="0.78"/>
+<rect x="8.5" y="85.0" width="7.5" height="7.5" rx="0.5" fill="#077793" fill-opacity="0.77"/>
+<rect x="17.0" y="85.0" width="7.5" height="7.5" rx="0.5" fill="#077793" fill-opacity="0.74"/>
+<rect x="25.5" y="85.0" width="7.5" height="7.5" rx="0.5" fill="#3db7cb" fill-opacity="0.71"/>
+<rect x="34.0" y="85.0" width="7.5" height="7.5" rx="0.5" fill="#3db7cb" fill-opacity="0.68"/>
+<rect x="42.5" y="85.0" width="7.5" height="7.5" rx="0.5" fill="#1498b2" fill-opacity="0.67"/>
+<rect x="51.0" y="85.0" width="7.5" height="7.5" rx="0.5" fill="#1498b2" fill-opacity="0.74"/>
+<rect x="59.5" y="85.0" width="7.5" height="7.5" rx="0.5" fill="#3db7cb" fill-opacity="0.67"/>
+<rect x="68.0" y="85.0" width="7.5" height="7.5" rx="0.5" fill="#3db7cb" fill-opacity="0.69"/>
+<rect x="76.5" y="85.0" width="7.5" height="7.5" rx="0.5" fill="#6cceda" fill-opacity="0.63"/>
+<rect x="85.0" y="85.0" width="7.5" height="7.5" rx="0.5" fill="#a2e1e7" fill-opacity="0.30"/>
+<rect x="93.5" y="85.0" width="7.5" height="7.5" rx="0.5" fill="#6cceda" fill-opacity="0.64"/>
+<rect x="0.0" y="93.5" width="7.5" height="7.5" rx="0.5" fill="#03475e" fill-opacity="0.87"/>
+<rect x="8.5" y="93.5" width="7.5" height="7.5" rx="0.5" fill="#045c78" fill-opacity="0.78"/>
+<rect x="17.0" y="93.5" width="7.5" height="7.5" rx="0.5" fill="#045c78" fill-opacity="0.83"/>
+<rect x="25.5" y="93.5" width="7.5" height="7.5" rx="0.5" fill="#1498b2" fill-opacity="0.72"/>
+<rect x="34.0" y="93.5" width="7.5" height="7.5" rx="0.5" fill="#1498b2" fill-opacity="0.77"/>
+<rect x="42.5" y="93.5" width="7.5" height="7.5" rx="0.5" fill="#1498b2" fill-opacity="0.72"/>
+<rect x="51.0" y="93.5" width="7.5" height="7.5" rx="0.5" fill="#077793" fill-opacity="0.75"/>
+<rect x="59.5" y="93.5" width="7.5" height="7.5" rx="0.5" fill="#1498b2" fill-opacity="0.72"/>
+<rect x="68.0" y="93.5" width="7.5" height="7.5" rx="0.5" fill="#1498b2" fill-opacity="0.71"/>
+<rect x="76.5" y="93.5" width="7.5" height="7.5" rx="0.5" fill="#3db7cb" fill-opacity="0.68"/>
+<rect x="85.0" y="93.5" width="7.5" height="7.5" rx="0.5" fill="#6cceda" fill-opacity="0.63"/>
+<rect x="93.5" y="93.5" width="7.5" height="7.5" rx="0.5" fill="#a2e1e7" fill-opacity="0.30"/>
+<path d="M0 63.25 H34.0 M37.75 8.5 V59.5" fill="none" stroke="white" stroke-width="1.65" stroke-dasharray="3 2.5"/>
+<rect x="34.0" y="59.5" width="7.5" height="7.5" rx="0.5" fill="none" stroke="#163f50" stroke-width="2.8"/>
+<rect x="34.0" y="59.5" width="7.5" height="7.5" rx="0.5" fill="none" stroke="white" stroke-width="1.25"/>
+<path d="M41.5 59.5 l7 -6 h4" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M41.5 59.5 l7 -6 h4" fill="none" stroke="#153c4a" stroke-width="1.15" stroke-linecap="round" stroke-linejoin="round"/>
+<g id="geo-matrix-notation" fill="#153c4a" stroke="white" stroke-width="2.6" stroke-linejoin="round" paint-order="stroke fill" font-style="italic" font-weight="bold">
+<style>#geo-matrix-notation text { font-family: Cambria, Georgia, serif; }</style>
+<text x="-7" y="68.25" text-anchor="middle" font-size="16">i</text>
+<text x="37.75" y="8.0" text-anchor="middle" font-size="15">j</text>
+<text x="54.5" y="55.5" font-size="19">t<tspan dy="4" font-size="13">ij</tspan></text>
+</g></g></g>
+<text x="624" y="437" font-size="10" fill="#56727e" font-weight="400" text-anchor="start" class="mono">V01</text>
+<rect x="660" y="428" width="42" height="14" rx="2" fill="#0bbbe7" stroke="none"/>
+<rect x="710" y="428" width="56" height="14" rx="2" fill="#0bbbe7" stroke="none"/>
+<text x="624" y="459" font-size="10" fill="#56727e" font-weight="400" text-anchor="start" class="mono">V02</text>
+<rect x="676" y="450" width="42" height="14" rx="2" fill="#67c6cc" stroke="none"/>
+<rect x="723" y="450" width="56" height="14" rx="2" fill="#67c6cc" stroke="none"/>
+<text x="624" y="481" font-size="10" fill="#56727e" font-weight="400" text-anchor="start" class="mono">V03</text>
+<rect x="692" y="472" width="42" height="14" rx="2" fill="#69a9c2" stroke="none"/>
+<rect x="736" y="472" width="56" height="14" rx="2" fill="#69a9c2" stroke="none"/>
+<path d="M627 503 H664 L681 497 H707 L728 489 H757 L778 483 H822" fill="none" stroke="#055668" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<rect x="899" y="425" width="82" height="37" rx="6" fill="#fff0dc" stroke="none"/>
+<text x="940" y="450" font-size="12" fill="#bd5d13" font-weight="600" text-anchor="middle">Candidate</text>
+<rect x="1018" y="425" width="82" height="37" rx="6" fill="#dff5fb" stroke="none"/>
+<text x="1059" y="450" font-size="12" fill="#055668" font-weight="600" text-anchor="middle">Published</text>
+<path d="M984 444 H1014" fill="none" stroke="#055668" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<text x="996" y="490" font-size="12" fill="#56727e" font-weight="500" text-anchor="middle">Versions + facts + physical checks</text>
+<path d="M1181 453 H1361" fill="none" stroke="#c7d8df" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+<circle cx="1185" cy="453" r="9" fill="#388567" stroke="none" stroke-width="1"/>
+<text x="1185" y="485" font-size="11" fill="#56727e" font-weight="400" text-anchor="middle">Done</text>
+<circle cx="1238" cy="453" r="9" fill="#388567" stroke="none" stroke-width="1"/>
+<text x="1238" y="485" font-size="11" fill="#56727e" font-weight="400" text-anchor="middle">Done</text>
+<circle cx="1291" cy="453" r="9" fill="#0bbbe7" stroke="none" stroke-width="1"/>
+<text x="1291" y="485" font-size="11" fill="#56727e" font-weight="400" text-anchor="middle">Service</text>
+<circle cx="1344" cy="453" r="9" fill="#ff992f" stroke="none" stroke-width="1"/>
+<text x="1344" y="485" font-size="11" fill="#56727e" font-weight="400" text-anchor="middle">Candidate</text>
+<path d="M1272 672 V712 H720 V672" fill="none" stroke="#bd5d13" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#feedback)"/>
+<rect x="784" y="696" width="435" height="34" rx="6" fill="#fff4e8" stroke="#f2d4b3"/>
+<text x="1001" y="720" font-size="15" fill="#bd5d13" font-weight="600" text-anchor="middle">Facts → remaining work → candidate → validate adoption</text>
+<text x="40" y="757" font-size="18" fill="#56727e" font-weight="600" text-anchor="start">DATA LINEAGE / Retain inputs, decisions, and the work that actually happened</text>
+<rect x="40" y="780" width="208" height="84" rx="8" fill="#e7f1f5" stroke="none"/>
+<text x="144" y="812" font-size="18" fill="#055668" font-weight="600" text-anchor="middle">Saved scenario</text>
+<text x="144" y="841" font-size="13" fill="#56727e" font-weight="400" text-anchor="middle">Business version</text>
+<path d="M252 821 h14" fill="none" stroke="#8ca9b6" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<rect x="270" y="780" width="208" height="84" rx="8" fill="#e7f1f5" stroke="none"/>
+<text x="374" y="812" font-size="18" fill="#055668" font-weight="600" text-anchor="middle">Frozen input</text>
+<text x="374" y="841" font-size="13" fill="#56727e" font-weight="400" text-anchor="middle">Problem / matrix / options</text>
+<path d="M482 821 h14" fill="none" stroke="#8ca9b6" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<rect x="500" y="780" width="208" height="84" rx="8" fill="#e7f1f5" stroke="none"/>
+<text x="604" y="812" font-size="18" fill="#055668" font-weight="600" text-anchor="middle">Candidate</text>
+<text x="604" y="841" font-size="13" fill="#56727e" font-weight="400" text-anchor="middle">Separate result / explanation</text>
+<path d="M712 821 h14" fill="none" stroke="#8ca9b6" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<rect x="730" y="780" width="208" height="84" rx="8" fill="#e7f1f5" stroke="none"/>
+<text x="834" y="812" font-size="18" fill="#055668" font-weight="600" text-anchor="middle">Published plan</text>
+<text x="834" y="841" font-size="13" fill="#56727e" font-weight="400" text-anchor="middle">Adoption audit / version</text>
+<path d="M942 821 h14" fill="none" stroke="#8ca9b6" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<rect x="960" y="780" width="208" height="84" rx="8" fill="#e7f1f5" stroke="none"/>
+<text x="1064" y="812" font-size="18" fill="#055668" font-weight="600" text-anchor="middle">Execution facts</text>
+<text x="1064" y="841" font-size="13" fill="#56727e" font-weight="400" text-anchor="middle">Events / actual cargo</text>
+<path d="M1172 821 h14" fill="none" stroke="#8ca9b6" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<rect x="1190" y="780" width="208" height="84" rx="8" fill="#e7f1f5" stroke="none"/>
+<text x="1294" y="812" font-size="18" fill="#055668" font-weight="600" text-anchor="middle">Historical snapshot</text>
+<text x="1294" y="841" font-size="13" fill="#56727e" font-weight="400" text-anchor="middle">Query / inspect history</text>
+<rect x="40" y="898" width="872" height="242" rx="12" fill="white" stroke="#d7e4e9"/>
+<text x="64" y="937" font-size="23" fill="#153c4a" font-weight="600" text-anchor="start">Task center / preparation, dependencies, artifacts</text>
+<text x="64" y="970" font-size="17" fill="#56727e" font-weight="400" text-anchor="start">Parent / child tasks and success dependencies are recorded separately.</text>
+<rect x="64" y="995" width="188" height="70" rx="7" fill="#edf7fa" stroke="none"/>
+<text x="158" y="1024" font-size="18" fill="#055668" font-weight="600" text-anchor="middle">Prepare roads</text>
+<text x="158" y="1050" font-size="14" fill="#56727e" font-weight="400" text-anchor="middle">OSM PBF</text>
+<path d="M255 1030 h15" fill="none" stroke="#055668" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<rect x="274" y="995" width="188" height="70" rx="7" fill="#edf7fa" stroke="none"/>
+<text x="368" y="1024" font-size="18" fill="#055668" font-weight="600" text-anchor="middle">Freeze matrix</text>
+<text x="368" y="1050" font-size="14" fill="#56727e" font-weight="400" text-anchor="middle">Road snapshot</text>
+<path d="M465 1030 h15" fill="none" stroke="#055668" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<rect x="484" y="995" width="188" height="70" rx="7" fill="#edf7fa" stroke="none"/>
+<text x="578" y="1024" font-size="18" fill="#055668" font-weight="600" text-anchor="middle">Solve</text>
+<text x="578" y="1050" font-size="14" fill="#56727e" font-weight="400" text-anchor="middle">Input / result</text>
+<path d="M675 1030 h15" fill="none" stroke="#055668" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<rect x="694" y="995" width="188" height="70" rx="7" fill="#edf7fa" stroke="none"/>
+<text x="788" y="1024" font-size="18" fill="#055668" font-weight="600" text-anchor="middle">Geometry</text>
+<text x="788" y="1050" font-size="14" fill="#56727e" font-weight="400" text-anchor="middle">Road polylines</text>
+<text x="64" y="1113" font-size="17" fill="#56727e" font-weight="400" text-anchor="start">Shared CPU / memory · queue / progress / cancel · retry · artifact downloads</text>
+<rect x="936" y="898" width="464" height="242" rx="12" fill="white" stroke="#d7e4e9"/>
+<text x="960" y="937" font-size="23" fill="#153c4a" font-weight="600" text-anchor="start">Map packages / compute and display</text>
+<circle cx="964" cy="973" r="3" fill="#0bbbe7" stroke="none" stroke-width="1"/>
+<text x="978" y="979" font-size="15" fill="#56727e" font-weight="400" text-anchor="start">Road packages: PBF → graph → matrices / routes</text>
+<circle cx="964" cy="1012" r="3" fill="#0bbbe7" stroke="none" stroke-width="1"/>
+<text x="978" y="1018" font-size="15" fill="#56727e" font-weight="400" text-anchor="start">Basemaps: PMTiles → local styles / fonts / icons</text>
+<circle cx="964" cy="1051" r="3" fill="#87a9b7" stroke="none" stroke-width="1"/>
+<text x="978" y="1057" font-size="15" fill="#56727e" font-weight="400" text-anchor="start">Inspect coverage, provenance, versions, size, references</text>
+<circle cx="964" cy="1090" r="3" fill="#87a9b7" stroke="none" stroke-width="1"/>
+<text x="978" y="1096" font-size="15" fill="#56727e" font-weight="400" text-anchor="start">Prepare basemaps independently of solves / adoption</text>
+<rect x="40" y="1170" width="660" height="248" rx="12" fill="white" stroke="#d7e4e9"/>
+<text x="64" y="1210" font-size="23" fill="#153c4a" font-weight="600" text-anchor="start">Execution boundaries / recheck every adoption</text>
+<rect x="64" y="1232" width="176" height="32" rx="6" fill="#e5f5ed" stroke="none"/>
+<text x="152.0" y="1254" font-size="15" fill="#217153" font-weight="600" text-anchor="middle">Completed facts</text>
+<rect x="252" y="1232" width="176" height="32" rx="6" fill="#e2f5fa" stroke="none"/>
+<text x="340.0" y="1254" font-size="15" fill="#055668" font-weight="600" text-anchor="middle">In-service work</text>
+<rect x="440" y="1232" width="236" height="32" rx="6" fill="#fff0df" stroke="none"/>
+<text x="558.0" y="1254" font-size="15" fill="#bd5d13" font-weight="600" text-anchor="middle">Unfinished route suffix</text>
+<text x="64" y="1302" font-size="16" fill="#56727e" font-weight="400" text-anchor="start">Actual positions, loads, and cargo ownership bound the remaining problem.</text>
+<text x="64" y="1338" font-size="16" fill="#56727e" font-weight="400" text-anchor="start">Recheck capacity, reachability, load order, prerequisites, commitments.</text>
+<text x="64" y="1374" font-size="16" fill="#56727e" font-weight="400" text-anchor="start">Event-driven replanning and automatic adoption are separate settings.</text>
+<rect x="724" y="1170" width="676" height="248" rx="12" fill="white" stroke="#d7e4e9"/>
+<text x="748" y="1210" font-size="23" fill="#153c4a" font-weight="600" text-anchor="start">Scenarios and audit / retain each decision baseline</text>
+<rect x="748" y="1230" width="116" height="32" rx="6" fill="#e7f1f5" stroke="none"/>
+<text x="806.0" y="1252" font-size="15" fill="#055668" font-weight="600" text-anchor="middle">Scenarios</text>
+<text x="884" y="1252" font-size="16" fill="#56727e" font-weight="400" text-anchor="start">Independent drafts; saving creates a new version</text>
+<rect x="748" y="1272" width="116" height="32" rx="6" fill="#e7f1f5" stroke="none"/>
+<text x="806.0" y="1294" font-size="15" fill="#055668" font-weight="600" text-anchor="middle">Solves</text>
+<text x="884" y="1294" font-size="16" fill="#56727e" font-weight="400" text-anchor="start">Problem, matrix, options, result, and score trends</text>
+<rect x="748" y="1314" width="116" height="32" rx="6" fill="#e7f1f5" stroke="none"/>
+<text x="806.0" y="1336" font-size="15" fill="#055668" font-weight="600" text-anchor="middle">Plans</text>
+<text x="884" y="1336" font-size="16" fill="#56727e" font-weight="400" text-anchor="start">Actor, execution baseline, plan version, and changes</text>
+<rect x="748" y="1356" width="116" height="32" rx="6" fill="#e7f1f5" stroke="none"/>
+<text x="806.0" y="1378" font-size="15" fill="#055668" font-weight="600" text-anchor="middle">Execution</text>
+<text x="884" y="1378" font-size="16" fill="#56727e" font-weight="400" text-anchor="start">Departure, arrival, service, completion, cargo events</text>
+<rect x="40" y="1450" width="1360" height="186" rx="12" fill="#153c4a" stroke="none"/>
+<text x="64" y="1490" font-size="24" fill="white" font-weight="600" text-anchor="start">Four connected workspaces for every scenario</text>
+<rect x="64" y="1510" width="312" height="32" rx="6" fill="#285362" stroke="none"/>
+<text x="220.0" y="1532" font-size="20" fill="#e7f7fc" font-weight="600" text-anchor="middle">Data and rules</text>
+<rect x="394" y="1510" width="312" height="32" rx="6" fill="#285362" stroke="none"/>
+<text x="550.0" y="1532" font-size="20" fill="#e7f7fc" font-weight="600" text-anchor="middle">Plans</text>
+<rect x="724" y="1510" width="312" height="32" rx="6" fill="#285362" stroke="none"/>
+<text x="880.0" y="1532" font-size="20" fill="#e7f7fc" font-weight="600" text-anchor="middle">Execution</text>
+<rect x="1054" y="1510" width="312" height="32" rx="6" fill="#285362" stroke="none"/>
+<text x="1210.0" y="1532" font-size="20" fill="#e7f7fc" font-weight="600" text-anchor="middle">History</text>
+<text x="64" y="1582" font-size="18" fill="#bed4dd" font-weight="400" text-anchor="start">Workbench / HTTP API / CLI / Rust library share contracts and the compute engine.</text>
+<rect x="64" y="1605" width="18" height="7" rx="2" fill="#0bbbe7" stroke="none"/>
+<text x="92" y="1617" font-size="15" fill="#bed4dd" font-weight="400" text-anchor="start">Published plan</text>
+<rect x="270" y="1605" width="18" height="7" rx="2" fill="#ff992f" stroke="none"/>
+<text x="298" y="1617" font-size="15" fill="#bed4dd" font-weight="400" text-anchor="start">Candidate changes</text>
+<rect x="505" y="1605" width="18" height="7" rx="2" fill="#55a47b" stroke="none"/>
+<text x="533" y="1617" font-size="15" fill="#bed4dd" font-weight="400" text-anchor="start">Completed work</text>
+<rect x="725" y="1605" width="18" height="7" rx="2" fill="#b3c2ce" stroke="none"/>
+<text x="753" y="1617" font-size="15" fill="#bed4dd" font-weight="400" text-anchor="start">Baseline schedule</text>
+<text x="1376" y="1617" font-size="13" fill="#aacbd6" font-weight="400" text-anchor="end">Capability schematic · not a screenshot</text>
+</svg>

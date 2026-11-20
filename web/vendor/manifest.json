@@ -1,0 +1,12 @@
+{
+  "maplibre-gl": {
+    "version": "6.16.0",
+    "integrity": "sha512-gApO66EMtoDZuio680RUBvskR7ahFd/NNhLN4tBAs+Y7FeT4gQV8zVFgYVMRmFxQznOEzecW19w6xOd9XjZjiA=="
+  },
+  "pmtiles": {
+    "version": "4.5.0",
+    "integrity": "sha512-CBeD4SoUluFziGdy/8k7FOjQxQy486n+929W/tWophauvMICpkZ26vGBWhDt/6b1FZQWNaf4jFdT/5+q0Wii5w==",
+    "license_sha256": "0371c38f338835f7fc13ed71176f3d92144e22c8b736a31cced57adbbeb647b3",
+    "license_commit": "3b10e67edb65c6b04549f74c0279cef8328d859c"
+  }
+}

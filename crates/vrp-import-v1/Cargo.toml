@@ -1,0 +1,13 @@
+[package]
+name = "vrp-import-v1"
+description = "把 vrp-0 的 JSON 转成 v2 求解请求（开发工具，不是兼容模式）"
+version.workspace = true
+edition.workspace = true
+publish.workspace = true
+license.workspace = true
+
+[dependencies]
+vrp-core.workspace = true
+vrp-model.workspace = true
+vrp-proto.workspace = true
+serde_json.workspace = true

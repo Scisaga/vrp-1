@@ -1,0 +1,11 @@
+[package]
+name = "vrp-model"
+description = "契约与内核之间的转换：校验、补齐未知边、编译，以及把结果转回 proto"
+version.workspace = true
+edition.workspace = true
+publish.workspace = true
+license.workspace = true
+
+[dependencies]
+vrp-core.workspace = true
+vrp-proto.workspace = true

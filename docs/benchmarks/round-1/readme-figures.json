@@ -1,0 +1,21 @@
+{
+  "sources": {
+    "summary.json": "295f77e010cb5b3b33f2d8897dcc3cf416e5136fe88a2b678a643ed87a0043ed",
+    "traces.json": "193828bfacf4b2e64cc8f51edde83df0f98b6feaaabb5aa76dad77763ba22173"
+  },
+  "renderer_sha256": "dfe951e5dc5f6e30bd28703e8e69f647eda3a7c7cfef406695ea2e05dd37aa54",
+  "matplotlib": "3.10.8",
+  "figures": {
+    "readme-quality-summary.en.svg": "9bd131b7a69eb9f17932e8b9a5d7034c2418ada133a5ed30c1088aaeeee37d3f",
+    "readme-quality-cold.en.svg": "6bda771d6d2389b3449b68ad10f4661ef7b78517fc088af24d64ed371e431484",
+    "readme-quality-continue.en.svg": "e0e38e9e7290a3537a9076c42133a60a838adbf15d53f3f5ae98f9fe18628e0f",
+    "readme-equal-quality.en.svg": "3a00b6b1765e5864c0ca1e789484e93746470a0b81302b50d2d531963eafeca9",
+    "readme-resources.en.svg": "77676a5d4d3868674edb9b57a5b5a39d222bb0f3125f892a9e7bbfbd37513586",
+    "readme-quality-summary.zh-CN.svg": "c23083dcaaca15f03ff98bd8782332fa4c5be6d900e6fc63d596997d1d3cde05",
+    "readme-quality-cold.zh-CN.svg": "6e7c7cb67081451a6fff36c566d146252f411dffb60b198b725dd3b963a620c0",
+    "readme-quality-continue.zh-CN.svg": "641172f93a8542f110e789392314440b96433c940b7d831d2fe9dd905ba8f168",
+    "readme-equal-quality.zh-CN.svg": "61a0e16993cbac247e3390513b410192232a4911791e1c879e87806e81556940",
+    "readme-resources.zh-CN.svg": "7ad009c90119983b2ff1e9782d90c95ac5cc4db411378cb7dcff5852fff769bd"
+  },
+  "method": "Actual step events; no interpolation; all configured seeds required for feasible cost curves; independent instance scales."
+}

@@ -1,0 +1,763 @@
+syntax = "proto3";
+package vrp.app.v1;
+import "vrp/engine/v1/engine.proto";
+import "vrp/worker/v1/worker.proto";
+import "vrp/maps/v1/maps.proto";
+
+// Standalone HTTP contract. JSON is ProtoJSON; POST bodies also accept binary
+// protobuf. Responses are JSON unless Accept: application/protobuf is specified.
+// SSE is always ProtoJSON.
+service AppService {
+  // GET /v1/basemap-packages[/{id}], POST /prepare, /import, /{id}/enable,
+  // /{id}/update, DELETE /{id}; preparation returns a common task.
+  rpc ListBasemapPackages(vrp.maps.v1.ListBasemapsRequest) returns (vrp.maps.v1.ListBasemapsResponse);
+  rpc GetBasemapPackage(vrp.maps.v1.PackageRequest) returns (vrp.maps.v1.BasemapPackage);
+  rpc PrepareBasemap(vrp.maps.v1.PrepareBasemapRequest) returns (Task);
+  rpc EstimateBasemap(vrp.maps.v1.PrepareBasemapRequest) returns (Task);
+  rpc ImportBasemap(vrp.maps.v1.ImportBasemapRequest) returns (Task);
+  rpc EnableBasemap(vrp.maps.v1.EnableBasemapRequest) returns (vrp.maps.v1.BasemapPackage);
+  rpc UpdateBasemap(vrp.maps.v1.PackageRequest) returns (Task);
+  rpc DeleteBasemap(vrp.maps.v1.PackageRequest) returns (Empty);
+  // GET /v1/basemaps/selection (BasemapContext query), never creates a task.
+  rpc SelectBasemap(vrp.maps.v1.BasemapContext) returns (vrp.maps.v1.BasemapSelection);
+  // POST /v1/basemaps/selection explicitly binds a validated display selection;
+  // GET selection remains read-only and cannot create tasks or references.
+  rpc SetBasemapSelection(vrp.maps.v1.SetBasemapSelectionRequest) returns (vrp.maps.v1.BasemapSelection);
+  // GET/HEAD /v1/basemaps/{id}/archive.pmtiles: raw PMTiles, single Range,
+  // 200/206/304/416 and ETag. /style-light.json and /style-standard.json are
+  // MapLibre style assets. /v1/basemap-assets/{version}/{path} serves the
+  // bundled glyph/sprite manifest only, with the same local/remote auth policy.
+  // Common task API. Solver tasks retain their existing numeric IDs.
+  rpc ListTasks(ListTasksRequest) returns (ListTasksResponse);
+  rpc SubmitTask(SubmitTaskRequest) returns (Task);
+  rpc GetTask(TaskRequest) returns (Task);
+  rpc CancelTask(TaskRequest) returns (Task);
+  rpc RetryTask(TaskRequest) returns (Task);
+  rpc DeleteTask(TaskRequest) returns (Empty);
+  rpc WatchTask(TaskRequest) returns (stream Task);
+  rpc ListTaskArtifacts(TaskRequest) returns (ListTaskArtifactsResponse);
+  rpc PlanWithRoads(GeoPlanRequest) returns (Task);
+  rpc ListRoadPackages(ListRoadPackagesRequest) returns (ListRoadPackagesResponse);
+  rpc GetRoadPackage(RoadPackageRequest) returns (RoadPackage);
+  rpc ImportRoadPackage(ImportRoadPackageRequest) returns (Task);
+  rpc EnableRoadPackage(EnableRoadPackageRequest) returns (RoadPackage);
+  rpc DeleteRoadPackage(RoadPackageRequest) returns (Empty);
+  rpc GetRoadCatalog(Empty) returns (RoadCatalog);
+  // Additional REST operations use the same typed messages:
+  // GET /v1/road-packages/{package_id}/versions -> ListRoadPackagesResponse.
+  // POST /v1/road-packages/prepare: PrepareRoadPackageRequest -> Task.
+  // POST /v1/road-packages/{package_id}/update: PrepareRoadPackageRequest -> Task;
+  // only force_download is used in this body, the package ID comes from the path.
+  // POST /v1/road-packages/{package_id}/rebuild: Empty -> Task, validates the
+  // managed local source without fetching it. SubmitTask.matrix builds a graph
+  // for a specific scenario's bounds and returns the graph/matrix artifacts.
+  // GET /v1/map-config; presentation only, contains no service credentials.
+  rpc GetMapConfig(Empty) returns (MapConfig);
+  // GET/POST /v1/jobs/{job_id}/geometry; terminal results only. A POST replaces
+  // the display geometry atomically, without changing the input or score.
+  rpc GetJobGeometry(JobRequest) returns (JobGeometry);
+  rpc SaveJobGeometry(JobGeometry) returns (JobGeometry);
+  // POST /v1/scenarios; create/update using optimistic expected_version.
+  rpc SaveScenario(SaveScenarioRequest) returns (Scenario);
+  // POST /v1/scenarios/import; native SolveRequest protobuf only, no v1 JSON mode.
+  rpc ImportScenario(ImportScenarioRequest) returns (Scenario);
+  // GET /v1/scenarios/{scenario_id}?version=N (0/latest when omitted).
+  rpc GetScenario(GetScenarioRequest) returns (ScenarioVersion);
+  // GET /v1/scenarios/{scenario_id}/metadata?version=N; no problem or matrices.
+  rpc GetScenarioMetadata(GetScenarioRequest) returns (Scenario);
+  // DELETE /v1/scenarios/{scenario_id}?expected_version=N. Deletes every
+  // version and associated terminal jobs/geometry atomically. Rejects stale
+  // versions, active jobs, and any retained execution history or references.
+  rpc DeleteScenario(DeleteScenarioRequest) returns (Empty);
+  // GET /v1/scenarios?page_size=N&after_id=ID; ascending ID.
+  rpc ListScenarios(ListScenariosRequest) returns (ListScenariosResponse);
+  // POST /v1/jobs; exactly one source; options belong to the frozen request.
+  rpc SubmitJob(SubmitJobRequest) returns (Job);
+  // POST /v1/jobs/{job_id}/continue; immutable problem + final result warm start.
+  rpc ContinueJob(ContinueJobRequest) returns (Job);
+  // POST /v1/jobs/{job_id}/adjust; evaluate a manual candidate, never publish it.
+  rpc AdjustPlan(AdjustPlanRequest) returns (Job);
+  // GET /v1/jobs/{job_id}
+  rpc GetJob(JobRequest) returns (Job);
+  // GET /v1/jobs/{job_id}/trend; durable sampled progress, at most 2048 points.
+  // Old jobs or capacity-limited histories set partial_history. No history is
+  // synthesized from a final score. Deleted jobs return 404.
+  rpc GetJobTrend(JobRequest) returns (JobTrend);
+  // GET /v1/jobs?page_size=N&before_id=ID&scenario_id=ID; newest first.
+  rpc ListJobs(ListJobsRequest) returns (ListJobsResponse);
+  // POST /v1/jobs/{job_id}/cancel; no body; idempotent, terminal jobs unchanged.
+  rpc CancelJob(JobRequest) returns (Job);
+  // DELETE /v1/jobs/{job_id}, also DELETE /v1/tasks/{numeric_id}.
+  // Deletes an unreferenced terminal plan and its input/result/trend/geometry,
+  // associated idempotency key and exclusive terminal workflow records.
+  // Shared data and saved scenario matrix provenance are retained. Running,
+  // adopted/execution-audit or externally referenced plans return 409.
+  rpc DeleteJob(JobRequest) returns (Empty);
+  // GET /v1/jobs/{job_id}/request; protobuf by default, JSON via Accept.
+  rpc GetInput(JobRequest) returns (vrp.engine.v1.SolveRequest);
+  // GET /v1/jobs/{job_id}/result; 409 until has_result; protobuf by default.
+  rpc GetResult(JobRequest) returns (vrp.engine.v1.SolveResult);
+  // GET /v1/jobs/{job_id}/events; bounded latest-snapshot SSE, event: snapshot,
+  // id: job_id:revision, data: Job. Last-Event-ID must match this job and cannot
+  // exceed current revision. Reconnect sends latest state, not every missed tick.
+  // Terminal snapshot ends the stream. Disconnect does not cancel computation.
+  rpc WatchJob(JobRequest) returns (stream Job);
+  // GET /healthz; 503 when shutting down or storage is unavailable.
+  rpc Health(Empty) returns (HealthStatus);
+  // POST /v1/operations/start; start live execution from an immutable scenario.
+  rpc StartOperation(StartOperationRequest) returns (Operation);
+  // GET /v1/operations/{scenario_id}?revision=N; 0 means current.
+  rpc GetOperation(GetOperationRequest) returns (Operation);
+  // GET /v1/operations/{scenario_id}/history?page_size=N&before_revision=N.
+  rpc ListOperationHistory(ListOperationHistoryRequest) returns (ListOperationHistoryResponse);
+  // POST /v1/operations/{scenario_id}/events; durable, atomic, idempotent batch.
+  rpc ApplyExecutionEvent(ExecutionEvent) returns (Operation);
+  // POST /v1/operations/{scenario_id}/configure; CAS policy/commitment update.
+  rpc ConfigureOperation(ConfigureOperationRequest) returns (Operation);
+  // POST /v1/operations/{scenario_id}/replan; a new bounded computation.
+  rpc Replan(ReplanRequest) returns (Job);
+  // POST /v1/operations/{scenario_id}/adopt; validate against current facts and CAS.
+  rpc AdoptPlan(AdoptPlanRequest) returns (Operation);
+  // POST /v1/operations/{scenario_id}/ack; acknowledge the exact current plan.
+  // A duplicate confirmation of that same current plan returns current state,
+  // even if expected_revision was advanced by the first confirmation.
+  rpc AcknowledgePlan(AcknowledgePlanRequest) returns (Operation);
+  // POST /v1/operations/{scenario_id}/close; retain audit history, release resources.
+  rpc CloseOperation(CloseOperationRequest) returns (Operation);
+}
+
+message Empty {}
+// HTTP errors use this envelope in JSON. Codes include invalid_request (400),
+// not_found (404), conflict (409), too_large (413), capacity (429),
+// unavailable (503), internal (500), unauthorized (401), forbidden (403),
+// method_not_allowed (405).
+message Error { string code = 1; string message = 2; }
+
+message Scenario {
+  // 1..64 ASCII letters/digits/_/-. Not a filesystem path.
+  string id = 1;
+  string name = 2;
+  uint64 version = 3;
+  int64 saved_unix_ms = 4;
+  ScenarioDisplay display = 5;
+  ScenarioOrigin origin = 6;
+  MatrixQuality matrix_quality = 7;
+  // Counts belong to this saved version; state/job/version counts are live.
+  // Available in lists and metadata without loading requests or matrices.
+  ScenarioSummary summary = 8;
+  bool matrix_ready = 9;
+  ScenarioGeoStatus geo = 10;
+}
+message ScenarioSummary {
+  uint32 ticket_count = 1;
+  uint32 agent_count = 2;
+  ScenarioState state = 3;
+  uint32 job_count = 4;
+  uint32 version_count = 5;
+}
+enum ScenarioState {
+  SCENARIO_STATE_NEEDS_PLAN = 0;
+  SCENARIO_STATE_HAS_PLAN = 1;
+  SCENARIO_STATE_QUEUED = 2;
+  SCENARIO_STATE_SOLVING = 3;
+  SCENARIO_STATE_EXECUTING = 4;
+  SCENARIO_STATE_CLOSED = 5;
+  // A result exists only for an older business version.
+  SCENARIO_STATE_STALE_PLAN = 6;
+}
+// Historical provenance is presentation metadata, not a promise of road accuracy.
+message ScenarioOrigin {
+  string source_sha256 = 1;
+  string source_name = 2;
+  string source_crs = 3;
+  string coordinate_note = 4;
+  repeated string warnings = 5;
+  bool historical_values_unverified = 6;
+}
+// All matrices combined, excluding diagonal cells. Supplied means an input
+// value with no model/fallback flag; it does not imply independently verified.
+message MatrixQuality {
+  uint64 entries = 1;
+  uint64 supplied_edges = 2;
+  uint64 estimated_edges = 3;
+  uint64 unreachable_edges = 4;
+}
+// Configure using --map-config <ProtoJSON file>. Empty URLs select the OSM
+// demonstration raster. style_url takes precedence over raster_url. Additional
+// resource origins (tiles, sprites, glyphs, PMTiles) must be explicitly allowed.
+message MapConfig {
+  string style_url = 1;
+  string raster_url = 2;
+  string attribution = 3;
+  repeated string resource_origins = 4;
+  bool disabled = 5;
+  uint32 max_zoom = 6;
+  // Explicit pre-existing URL/disabled settings take precedence over managed maps.
+  bool custom = 7;
+  bool offline_basemaps = 8;
+}
+message GeoPoint { double lng = 1; double lat = 2; }
+message RouteGeometry {
+  string agent_id = 1;
+  // Zero-based: start -> first stop is 0, last stop -> end is stop count.
+  uint32 leg_index = 2;
+  string from_location_id = 3;
+  string to_location_id = 4;
+  repeated GeoPoint points = 5;
+  // Inclusive indices delimiting the road portion; omitted means all road.
+  optional uint32 road_start_point_index = 6;
+  optional uint32 road_end_point_index = 7;
+}
+message JobGeometry {
+  string job_id = 1;
+  // Only WGS84 accepted; coordinate conversion belongs to the producer.
+  string coordinate_system = 2;
+  string provider = 3;
+  // Partial geometry is allowed. Missing legs remain explicit schematic lines.
+  repeated RouteGeometry legs = 4;
+}
+// Presentation only; not sent to the calculation core. Keys are stable entity IDs.
+message ObjectLabel { string name = 1; string address = 2; string note = 3; }
+message ScenarioDisplay {
+  map<string, ObjectLabel> agents = 1;
+  map<string, ObjectLabel> tickets = 2;
+  map<string, ObjectLabel> locations = 3;
+}
+message SaveScenarioRequest {
+  string scenario_id = 1;
+  string name = 2;
+  // 0 creates; otherwise must equal the current latest version.
+  uint64 expected_version = 3;
+  vrp.engine.v1.SolveRequest request = 4;
+  // Omitted preserves existing presentation; an explicit empty message clears it.
+  ScenarioDisplay display = 5;
+  // Omitted preserves origin. Explicit empty message clears it.
+  ScenarioOrigin origin = 6;
+}
+message ImportScenarioRequest {
+  string scenario_id = 1; string name = 2; uint64 expected_version = 3;
+  bytes request_bytes = 4; ScenarioDisplay display = 5; ScenarioOrigin origin = 6;
+}
+message GetScenarioRequest { string scenario_id = 1; uint64 version = 2; }
+message DeleteScenarioRequest {
+  string scenario_id = 1;
+  // Required positive current version, checked atomically with deletion.
+  uint64 expected_version = 2;
+}
+message ScenarioVersion { Scenario scenario = 1; vrp.engine.v1.SolveRequest request = 2; }
+message ListScenariosRequest { uint32 page_size = 1; string after_id = 2; }
+message ListScenariosResponse { repeated Scenario scenarios = 1; string next_after_id = 2; }
+message ScenarioRef {
+  string scenario_id = 1;
+  // A positive immutable version is required, not "latest".
+  uint64 version = 2;
+}
+message SubmitJobRequest {
+  // Optional, <=128 ASCII visible characters. Retries with the same key and
+  // identical normalized input/source return the original job, even if terminal.
+  // Reuse with different content returns 409. Keys persist until job deletion.
+  string idempotency_key = 1;
+  oneof source {
+    vrp.engine.v1.SolveRequest request = 2;
+    ScenarioRef scenario = 3;
+  }
+  // Whole options replacement, independent of the scenario business version.
+  vrp.engine.v1.SolveOptions options = 4;
+  // Only PLANNING (default) and REPLANNING are accepted here.
+  JobKind kind = 5;
+}
+enum JobKind {
+  JOB_KIND_PLANNING = 0;
+  JOB_KIND_OPTIMIZATION = 1;
+  JOB_KIND_REPLANNING = 2;
+  JOB_KIND_REALTIME_REPLAN = 3;
+  JOB_KIND_MANUAL_ADJUSTMENT = 4;
+}
+message ContinueJobRequest { string job_id = 1; vrp.engine.v1.SolveOptions options = 2; }
+message AdjustPlanRequest {
+  string job_id = 1;
+  // Indices refer to the source job request, including any auxiliary visits.
+  vrp.engine.v1.Solution solution = 2;
+  string actor = 3;
+  string reason = 4;
+}
+enum JobState {
+  JOB_STATE_QUEUED = 0;
+  JOB_STATE_RUNNING = 1;
+  JOB_STATE_CANCELLING = 2;
+  JOB_STATE_SUCCEEDED = 3;
+  // May carry a best result; consult has_result. Queued cancellation has none.
+  JOB_STATE_CANCELLED = 4;
+  JOB_STATE_FAILED = 5;
+  // Server restarted after an unclean stop. No automatic retry of running jobs.
+  JOB_STATE_INTERRUPTED = 6;
+}
+message Job {
+  string id = 1;
+  ScenarioRef scenario = 2;
+  JobState state = 3;
+  uint64 revision = 4;
+  int64 created_unix_ms = 5;
+  int64 started_unix_ms = 6;
+  int64 finished_unix_ms = 7;
+  uint32 threads = 8;
+  // Compiling/searching/explaining; only meaningful after first child report.
+  vrp.worker.v1.ChildProgress progress = 9;
+  bool has_result = 10;
+  Error error = 11;
+  vrp.engine.v1.Score score = 12;
+  vrp.engine.v1.SolveStats stats = 13;
+  // Present for a real-time replan, not for an ordinary static job.
+  ExecutionBasis execution_basis = 14;
+  JobKind kind = 15;
+  string source_job_id = 16;
+  string actor = 17;
+  string reason = 18;
+  TaskResources resource_limits = 19;
+}
+
+message ExecutionBasis {
+  string scenario_id = 1;
+  uint64 execution_version = 2;
+  uint64 plan_version = 3;
+  int64 at = 4; // Horizon-relative seconds.
+}
+
+// Search samples are persisted by the application, independently of browser
+// observation. The first available sample and final score are retained. The
+// nominal interval starts at 1000 ms and doubles when older samples are thinned.
+message JobTrend {
+  string job_id = 1;
+  repeated vrp.engine.v1.Progress samples = 2;
+  uint64 sample_interval_ms = 3;
+  // True when early history is unavailable or storage limits dropped samples.
+  bool partial_history = 4;
+  // Current Job.revision, supplied by reads; not a separate business version.
+  uint64 revision = 5;
+}
+enum ExecutionClock { EXECUTION_CLOCK_LIVE = 0; EXECUTION_CLOCK_REPLAY = 1; }
+message OperationPolicy {
+  bool auto_replan = 1;
+  bool auto_adopt = 2; // Default false: human confirmation.
+  uint32 debounce_ms = 3; // 0 defaults to 250; max 5000, bounded from first event.
+  vrp.engine.v1.SolveOptions options = 4;
+  ExecutionClock clock = 5;
+  // Fallback origin for unloaded delivery cargo, explicit location ID.
+  string loading_location_id = 6;
+}
+enum VehiclePhase {
+  VEHICLE_PHASE_AVAILABLE = 0;
+  VEHICLE_PHASE_TRAVELLING = 1;
+  VEHICLE_PHASE_WAITING = 2;
+  VEHICLE_PHASE_SERVICING = 3;
+  VEHICLE_PHASE_PAUSED = 4;
+  VEHICLE_PHASE_UNAVAILABLE = 5;
+}
+enum TicketPhase {
+  TICKET_PHASE_PENDING = 0;
+  TICKET_PHASE_EN_ROUTE = 1;
+  TICKET_PHASE_ARRIVED = 2;
+  TICKET_PHASE_SERVING = 3;
+  TICKET_PHASE_COMPLETED = 4;
+  TICKET_PHASE_CANCELLED = 5;
+  TICKET_PHASE_EXCEPTION = 6;
+}
+message VehicleExecution {
+  string agent_id = 1;
+  VehiclePhase phase = 2;
+  vrp.engine.v1.Location position = 3;
+  int64 observed_at = 4;
+  int64 available_at = 5;
+  int64 travel_seconds = 6; // Cumulative observed driving work, monotonically increasing.
+  int64 service_seconds = 7; // Accumulated from confirmed service events.
+  uint32 completed_tickets = 8;
+  repeated int64 delivered = 9;
+  bool fixed_cost_paid = 10;
+  uint64 acknowledged_plan = 11;
+}
+message TicketExecution {
+  string ticket_id = 1;
+  TicketPhase phase = 2;
+  string agent_id = 3;
+  int64 observed_at = 4;
+  optional int64 service_started_at = 5;
+  optional int64 finished_at = 6;
+  optional int64 remaining_service_seconds = 7; // Presence preserves reported zero remaining work.
+  string note = 8;
+}
+// One whole order's cargo; ownership changes only on confirmed load/transfer/unload.
+message Cargo {
+  string ticket_id = 1;
+  string agent_id = 2; // Empty means stored at origin (or unloaded).
+  string location_id = 3;
+  repeated int64 quantities = 4;
+  bool delivered = 5;
+}
+message RouteCommitment {
+  string agent_id = 1;
+  repeated string prefix = 2;
+}
+message TimeCommitment {
+  string ticket_id = 1;
+  string agent_id = 2;
+  optional int64 earliest = 3;
+  optional int64 latest = 4;
+}
+message PlanStop {
+  string ticket_id = 1;
+  int64 arrival = 2;
+  int64 start = 3;
+  int64 end = 4;
+  string action = 5; // service, load, unload; auxiliary actions have stable IDs.
+  string cargo_ticket_id = 6;
+  string location_id = 7;
+}
+message PlanRoute {
+  string agent_id = 1;
+  repeated PlanStop stops = 2;
+  // Optional for historical plans written before route metrics were recorded.
+  optional int64 start_time = 3;
+  optional int64 end_time = 4;
+  optional int64 travel_time = 5;
+  optional int64 travel_distance = 6;
+}
+message PublishedPlan {
+  uint64 version = 1;
+  string job_id = 2;
+  uint64 execution_version = 3;
+  repeated PlanRoute routes = 4;
+  vrp.engine.v1.Score score = 5;
+  int64 adopted_unix_ms = 6;
+  string actor = 7;
+  // Assignment/order/time changes against the previously published plan.
+  repeated string changed_tickets = 8;
+}
+message Operation {
+  ScenarioRef scenario = 1;
+  uint64 revision = 2; // CAS for every mutation, including acknowledgments.
+  uint64 execution_version = 3; // Only facts/business/policy changes invalidate inputs.
+  int64 at = 4;
+  int64 clock_unix_ms = 5;
+  bool closed = 6;
+  OperationPolicy policy = 7;
+  repeated VehicleExecution vehicles = 8;
+  repeated TicketExecution tickets = 9;
+  repeated Cargo cargo = 10;
+  repeated RouteCommitment route_commitments = 11;
+  repeated TimeCommitment time_commitments = 12;
+  PublishedPlan plan = 13;
+  bool needs_replan = 14;
+  int64 replan_due_unix_ms = 15;
+  string latest_job_id = 16;
+  Error planning_error = 17;
+  bool plan_stale = 18;
+}
+message StartOperationRequest {
+  ScenarioRef scenario = 1;
+  int64 at = 2;
+  // Absent => automatic replanning, manual adoption, LIVE clock.
+  OperationPolicy policy = 3;
+  string actor = 4;
+  // Optional terminal static job from this exact scenario version; validate and
+  // adopt atomically with start. Does not manufacture physical execution events.
+  string initial_job_id = 5;
+}
+message ListOperationHistoryRequest {
+  string scenario_id = 1;
+  uint32 page_size = 2;
+  uint64 before_revision = 3;
+}
+message OperationHistoryEntry {
+  uint64 revision = 1;
+  int64 at = 2;
+  string kind = 3;
+  string actor = 4;
+  repeated string ticket_ids = 5;
+  repeated string agent_ids = 6;
+  uint64 plan_version = 7;
+  uint64 scenario_version = 8;
+}
+message ListOperationHistoryResponse {
+  repeated OperationHistoryEntry entries = 1;
+  uint64 next_before_revision = 2;
+}
+message GetOperationRequest { string scenario_id = 1; uint64 revision = 2; }
+message VehicleUpdate {
+  string agent_id = 1;
+  optional VehiclePhase phase = 2;
+  vrp.engine.v1.Location position = 3;
+  optional int64 available_at = 4;
+  optional int64 travel_seconds = 5;
+}
+message TicketUpdate {
+  string ticket_id = 1;
+  TicketPhase phase = 2;
+  string agent_id = 3;
+  optional int64 remaining_service_seconds = 4;
+  string note = 5;
+}
+message CargoUpdate {
+  string ticket_id = 1;
+  string from_agent_id = 2; // Empty: load from the cargo origin.
+  string to_agent_id = 3;   // Empty: unload to location_id.
+  string location_id = 4;
+}
+message ExecutionEvent {
+  string scenario_id = 1;
+  uint64 expected_revision = 2;
+  string event_id = 3; // Required, <=128 visible ASCII; same ID+bytes is idempotent.
+  int64 at = 4;
+  string actor = 5;
+  repeated VehicleUpdate vehicles = 6;
+  repeated TicketUpdate tickets = 7;
+  repeated CargoUpdate cargo = 8;
+}
+message ConfigureOperationRequest {
+  string scenario_id = 1;
+  uint64 expected_revision = 2;
+  OperationPolicy policy = 3;
+  repeated RouteCommitment route_commitments = 4;
+  repeated TimeCommitment time_commitments = 5;
+  string actor = 6;
+  string reason = 7;
+}
+message ReplanRequest {
+  string scenario_id = 1;
+  uint64 expected_revision = 2;
+  vrp.engine.v1.SolveOptions options = 3;
+}
+message AdoptPlanRequest {
+  string scenario_id = 1;
+  uint64 expected_revision = 2;
+  uint64 expected_plan_version = 3;
+  string job_id = 4;
+  string actor = 5;
+  // Manual-only override of business hard penalties; never physical/lock violations.
+  bool accept_business_violations = 6;
+  string reason = 7;
+}
+message AcknowledgePlanRequest {
+  string scenario_id = 1;
+  uint64 expected_revision = 2;
+  uint64 plan_version = 3;
+  string agent_id = 4;
+}
+message CloseOperationRequest { string scenario_id = 1; uint64 expected_revision = 2; string actor = 3; }
+message JobRequest { string job_id = 1; }
+message ListJobsRequest { uint32 page_size = 1; string before_id = 2; string scenario_id = 3; }
+message ListJobsResponse { repeated Job jobs = 1; string next_before_id = 2; }
+message HealthStatus {
+  bool ready = 1;
+  uint32 total_threads = 2;
+  uint32 reserved_threads = 3;
+  uint32 running_jobs = 4;
+  uint32 queued_jobs = 5;
+  uint32 max_running_jobs = 6;
+  uint64 payload_bytes = 7;
+  string engine_version = 8;
+}
+
+enum TaskKind {
+  TASK_KIND_SOLVE = 0;
+  TASK_KIND_GEO_PLAN = 1;
+  TASK_KIND_ROAD_PACKAGE_PREPARE = 2;
+  TASK_KIND_MATRIX_PREPARE = 3;
+  TASK_KIND_GEOMETRY_GENERATE = 4;
+  TASK_KIND_BASEMAP_PREPARE = 5;
+}
+enum TaskState {
+  TASK_STATE_QUEUED = 0;
+  TASK_STATE_RUNNING = 1;
+  TASK_STATE_CANCELLING = 2;
+  TASK_STATE_SUCCEEDED = 3;
+  TASK_STATE_CANCELLED = 4;
+  TASK_STATE_FAILED = 5;
+  TASK_STATE_INTERRUPTED = 6;
+  TASK_STATE_WAITING = 7;
+  TASK_STATE_PARTIAL = 8;
+}
+message TaskRequest { string task_id = 1; }
+message SubmitTaskRequest { TaskInput input = 1; string idempotency_key = 2; }
+message ListTasksRequest {
+  uint32 page_size = 1;
+  string before_id = 2;
+  string scenario_id = 3;
+  optional TaskKind kind = 4;
+  optional TaskState state = 5;
+}
+message ListTasksResponse { repeated Task tasks = 1; string next_before_id = 2; }
+message TaskProgress {
+  string phase = 1;
+  uint64 completed = 2;
+  uint64 total = 3;
+  string unit = 4;
+  string message = 5;
+}
+message TaskArtifact {
+  string id = 1;
+  string task_id = 2;
+  string kind = 3;
+  string name = 4;
+  string media_type = 5;
+  uint64 size_bytes = 6;
+  string sha256 = 7;
+  string href = 8;
+}
+message Task {
+  string id = 1;
+  TaskKind kind = 2;
+  TaskState state = 3;
+  uint64 revision = 4;
+  int64 created_unix_ms = 5;
+  int64 started_unix_ms = 6;
+  int64 finished_unix_ms = 7;
+  string parent_id = 8;
+  repeated string dependency_ids = 9;
+  ScenarioRef scenario = 10;
+  TaskProgress progress = 11;
+  Error error = 12;
+  repeated TaskArtifact artifacts = 13;
+  // Solver-only detail, projected from the original authoritative job record.
+  Job solver = 14;
+  string result_job_id = 15;
+  uint64 result_scenario_version = 16;
+  repeated string road_package_ids = 17;
+  string idempotency_key = 18;
+  string source_task_id = 19;
+  repeated string warnings = 20;
+  repeated string child_ids = 21;
+  string coordinate_hash = 22;
+  TaskResources resource_request = 23;
+  TaskResources resources_in_use = 24;
+  string basemap_package_id = 25;
+  vrp.maps.v1.BasemapEstimate basemap_estimate = 26;
+}
+message TaskResources { uint32 cpu_threads = 1; uint64 memory_bytes = 2; uint32 io_slots = 3; string class = 4; }
+message ListTaskArtifactsResponse { repeated TaskArtifact artifacts = 1; }
+message GeoBounds { double south = 1; double west = 2; double north = 3; double east = 4; }
+message GeoPlanRequest {
+  string scenario_id = 1;
+  uint64 expected_version = 2;
+  string idempotency_key = 3;
+  vrp.engine.v1.SolveOptions options = 4;
+  double connector_speed_kmh = 5;
+  double buffer_km = 6;
+  uint64 road_wait_ms = 7;
+}
+message RoadPackagePrepareInput {
+  string region_id = 1;
+  string name = 2;
+  string url = 3;
+  string import_path = 4;
+  string coverage_geojson = 5;
+  uint64 estimated_bytes = 6;
+  string source_etag = 7;
+  string source_last_modified = 8;
+  bool force_download = 9;
+}
+message MatrixPrepareInput {
+  vrp.engine.v1.SolveRequest request = 1;
+  repeated string road_package_ids = 2;
+  double connector_speed_kmh = 3;
+  double buffer_km = 4;
+  string network_artifact = 5;
+}
+message GeometryGenerateInput {
+  string job_id = 1;
+  string network_artifact = 2;
+  repeated string road_package_ids = 3;
+}
+// Typed immutable task input, stored separately from list/status metadata.
+message TaskInput {
+  oneof input {
+    GeoPlanRequest geo_plan = 1;
+    RoadPackagePrepareInput road_package = 2;
+    MatrixPrepareInput matrix = 3;
+    GeometryGenerateInput geometry = 4;
+    SubmitJobRequest solve = 5;
+    vrp.maps.v1.BasemapTaskInput basemap = 6;
+  }
+  vrp.engine.v1.SolveRequest frozen_request = 10;
+  string input_sha256 = 11;
+}
+enum RoadPackageState {
+  ROAD_PACKAGE_STATE_READY = 0;
+  ROAD_PACKAGE_STATE_DISABLED = 1;
+  ROAD_PACKAGE_STATE_PREPARING = 2;
+  ROAD_PACKAGE_STATE_FAILED = 3;
+}
+message RoadPackage {
+  string id = 1;
+  string region_id = 2;
+  string name = 3;
+  string provider = 4;
+  string source_url = 5;
+  string source_format = 6;
+  string coverage_geojson = 7;
+  GeoBounds bounds = 8;
+  string sha256 = 9;
+  uint64 size_bytes = 10;
+  int64 downloaded_unix_ms = 11;
+  string source_timestamp = 12;
+  uint64 version = 13;
+  bool enabled = 14;
+  RoadPackageState state = 15;
+  string task_id = 16;
+  uint64 reference_count = 17;
+  string attribution = 18;
+  repeated string referencing_task_ids = 19;
+  repeated string referencing_scenario_ids = 20;
+  repeated TaskArtifact graph_artifacts = 21;
+  string source_etag = 22;
+  string source_last_modified = 23;
+  int64 checked_unix_ms = 24;
+}
+message RoadPackageRequest { string package_id = 1; }
+message ListRoadPackagesRequest { uint32 page_size = 1; string after_id = 2; }
+message ListRoadPackagesResponse { repeated RoadPackage packages = 1; string next_after_id = 2; }
+message ImportRoadPackageRequest { string path = 1; string name = 2; string region_id = 3; string coverage_geojson = 4; }
+message PrepareRoadPackageRequest { string region_id = 1; bool force_download = 2; }
+message EnableRoadPackageRequest { string package_id = 1; bool enabled = 2; uint64 expected_version = 3; }
+message RoadCatalogEntry {
+  string id = 1;
+  string parent = 2;
+  string name = 3;
+  string url = 4;
+  string coverage_geojson = 5;
+  uint64 size_bytes = 6;
+  bool cached = 7;
+}
+message RoadCatalog { repeated RoadCatalogEntry entries = 1; bool available = 2; string message = 3; }
+message ScenarioGeoStatus {
+  string task_id = 1;
+  string status = 2;
+  string coordinate_hash = 3;
+  repeated string road_package_ids = 4;
+  uint64 model_edges = 5;
+  uint64 fallback_edges = 6;
+  string message = 7;
+}
+message SelectedRoadSource {
+  string region_id = 1; string url = 2; uint64 size_bytes = 3;
+  bool reused = 4; string coverage_geojson = 5; string package_id = 6;
+}
+message SourceSelectionReport {
+  GeoBounds scene_bounds = 1;
+  GeoBounds routing_bounds = 2;
+  repeated SelectedRoadSource sources = 3;
+  uint64 additional_download_bytes = 4;
+  bool coverage_complete = 5;
+  double uncovered_fraction = 6;
+  string reason = 7;
+  repeated string dependency_task_ids = 8;
+  uint64 actual_download_bytes = 9;
+}
+message MatrixPreparationReport {
+  string coordinate_hash = 1; uint64 model_edges = 2; uint64 fallback_edges = 3;
+  uint64 location_count = 4; bool ready = 5;
+  GeoBounds scene_bounds = 6; GeoBounds routing_bounds = 7;
+  repeated string road_package_ids = 8;
+  double connector_speed_kmh = 9;
+  string graph_sha256 = 10;
+  repeated string warnings = 11;
+}

@@ -1,0 +1,25 @@
+[package]
+name = "vrp-cli"
+description = "vrp 命令行与隔离求解入口"
+default-run = "vrp"
+version.workspace = true
+edition.workspace = true
+publish.workspace = true
+license.workspace = true
+
+[[bin]]
+name = "vrp"
+path = "src/main.rs"
+
+[[bin]]
+name = "vrp-bench-adapter"
+path = "src/bin/bench_adapter.rs"
+
+[dependencies]
+vrp-core.workspace = true
+vrp-model.workspace = true
+vrp-proto.workspace = true
+vrp-import-v1.workspace = true
+vrp-worker.workspace = true
+prost.workspace = true
+serde_json.workspace = true

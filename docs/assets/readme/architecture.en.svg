@@ -1,0 +1,106 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="1060"
+  viewBox="0 0 1440 1060" role="img" aria-labelledby="title desc" xml:lang="en">
+  <title id="title">vrp-1 technical architecture and compute boundary</title>
+  <desc id="desc">The workbench and business systems access vrp-server over HTTP. The application handles storage, scheduling, geography, and basemaps. vrp-worker runs isolated solves over Protobuf IPC; the CLI can also call vrp-model directly. vrp-model validates and compiles input for the standard-library-only vrp-core. Files in proto are the only contract source.</desc>
+  <defs>
+    <pattern id="grid" width="24" height="24" patternUnits="userSpaceOnUse">
+      <circle cx="1" cy="1" r=".8" fill="#d7e4e9"/>
+    </pattern>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M1 1 9 5 1 9" fill="none" stroke="#055668" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+    <marker id="feedback" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M1 1 9 5 1 9" fill="none" stroke="#bd5d13" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+  </defs>
+  <style>
+    text { font-family: 'Segoe UI', 'Microsoft YaHei', 'Noto Sans CJK SC', sans-serif; }
+    .mono { font-family: Consolas, 'DejaVu Sans Mono', monospace; }
+  </style>
+  <rect width="1440" height="1060" rx="20" fill="#f3f8fa"/>
+  <rect width="1440" height="1060" rx="20" fill="url(#grid)"/>
+
+<rect x="40" y="38" width="6" height="28" rx="3" fill="#0bbbe7" stroke="none"/>
+<text x="60" y="59" font-size="20" fill="#055668" font-weight="700" text-anchor="start">vrp-1  /  PsiAI</text>
+<text x="1400" y="58" font-size="16" fill="#56727e" font-weight="600" text-anchor="end">TECHNICAL ARCHITECTURE  /  02</text>
+<text x="40" y="113" font-size="36" fill="#153c4a" font-weight="700" text-anchor="start">A pure core. A complete application around it.</text>
+<text x="40" y="148" font-size="19" fill="#56727e" font-weight="400" text-anchor="start">Main calls and data flow. Networking, files, persistence, and process management live outside the core.</text>
+<rect x="40" y="182" width="1360" height="72" rx="10" fill="#e5f3f8" stroke="#bbdbe6"/>
+<text x="64" y="212" font-size="13" fill="#055668" font-weight="700" text-anchor="start">SINGLE CONTRACT SOURCE</text>
+<text x="64" y="239" font-size="21" fill="#055668" font-weight="600" text-anchor="start" class="mono">proto/**/*.proto</text>
+<path d="M370 218 H440" fill="none" stroke="#055668" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<text x="466" y="216" font-size="22" fill="#055668" font-weight="600" text-anchor="start" class="mono">vrp-proto</text>
+<text x="466" y="239" font-size="16" fill="#56727e" font-weight="400" text-anchor="start">Prost types + ProtoJSON generated from .proto</text>
+<text x="1376" y="213" font-size="16" fill="#055668" font-weight="500" text-anchor="end" class="mono">engine  /  worker  /  app  /  maps</text>
+<text x="1376" y="239" font-size="16" fill="#56727e" font-weight="400" text-anchor="end">HTTP · IPC · frozen requests / results</text>
+<text x="40" y="298" font-size="16" fill="#56727e" font-weight="600" text-anchor="start">01 / ENTRY POINTS</text>
+<text x="1080" y="298" font-size="16" fill="#56727e" font-weight="600" text-anchor="start">03 / APP RESOURCES</text>
+<rect x="356" y="280" width="680" height="424" rx="14" fill="#eaf2f5" stroke="#c7dce4"/>
+<text x="380" y="310" font-size="16" fill="#055668" font-weight="600" text-anchor="start">02 / APPLICATION &amp; ISOLATED PROCESSES</text>
+<rect x="40" y="336" width="272" height="110" rx="12" fill="white" stroke="#d7e4e9"/>
+<text x="60" y="369" font-size="22" fill="#153c4a" font-weight="600" text-anchor="start">Browser workbench</text>
+<text x="60" y="399" font-size="16" fill="#56727e" font-weight="400" text-anchor="start">ES Modules · MapLibre</text>
+<text x="60" y="425" font-size="15" fill="#56727e" font-weight="400" text-anchor="start">HTTP · bundled assets</text>
+<rect x="40" y="474" width="272" height="110" rx="12" fill="white" stroke="#d7e4e9"/>
+<text x="60" y="507" font-size="22" fill="#153c4a" font-weight="600" text-anchor="start">Business systems</text>
+<text x="60" y="537" font-size="16" fill="#56727e" font-weight="400" text-anchor="start">Protobuf / ProtoJSON</text>
+<text x="60" y="563" font-size="15" fill="#56727e" font-weight="400" text-anchor="start">Submit tasks · progress · results</text>
+<rect x="40" y="612" width="272" height="110" rx="12" fill="white" stroke="#d7e4e9"/>
+<text x="60" y="645" font-size="22" fill="#153c4a" font-weight="600" text-anchor="start">vrp CLI</text>
+<text x="60" y="675" font-size="16" fill="#56727e" font-weight="400" text-anchor="start">solve · solve-isolated</text>
+<text x="60" y="701" font-size="15" fill="#56727e" font-weight="400" text-anchor="start">eval · bench</text>
+<rect x="384" y="336" width="624" height="138" rx="12" fill="white" stroke="#d7e4e9"/>
+<text x="408" y="372" font-size="25" fill="#055668" font-weight="700" text-anchor="start" class="mono">vrp-server</text>
+<rect x="786" y="350" width="198" height="32" rx="6" fill="#e9f7fb" stroke="none"/>
+<text x="885.0" y="372" font-size="16" fill="#055668" font-weight="600" text-anchor="middle">Axum · Tokio</text>
+<text x="408" y="407" font-size="18" fill="#153c4a" font-weight="400" text-anchor="start">HTTP API · scenarios · execution projection · replan / adopt</text>
+<text x="408" y="442" font-size="18" fill="#56727e" font-weight="400" text-anchor="start">Bounded FIFO · shared quotas · task events and progress</text>
+<rect x="384" y="540" width="280" height="136" rx="12" fill="white" stroke="#d7e4e9"/>
+<text x="408" y="575" font-size="22" fill="#055668" font-weight="600" text-anchor="start" class="mono">vrp-worker</text>
+<text x="408" y="610" font-size="17" fill="#153c4a" font-weight="400" text-anchor="start">Supervisor + solver child</text>
+<text x="408" y="642" font-size="16" fill="#56727e" font-weight="400" text-anchor="start">Progress · cancel · memory cap</text>
+<rect x="700" y="540" width="308" height="136" rx="12" fill="white" stroke="#d7e4e9"/>
+<text x="724" y="575" font-size="22" fill="#055668" font-weight="600" text-anchor="start" class="mono">vrp-geo</text>
+<text x="724" y="610" font-size="17" fill="#153c4a" font-weight="400" text-anchor="start">Road process · PBF · local graph</text>
+<text x="724" y="642" font-size="16" fill="#56727e" font-weight="400" text-anchor="start">Matrices · geometry · provenance</text>
+<rect x="1080" y="336" width="320" height="138" rx="12" fill="white" stroke="#d7e4e9"/>
+<text x="1104" y="371" font-size="22" fill="#153c4a" font-weight="600" text-anchor="start">SQLite WAL + local files</text>
+<text x="1104" y="407" font-size="17" fill="#56727e" font-weight="400" text-anchor="start">Versions · tasks · execution history</text>
+<text x="1104" y="440" font-size="16" fill="#56727e" font-weight="400" text-anchor="start">Frozen inputs / results · geo artifacts</text>
+<rect x="1080" y="540" width="320" height="136" rx="12" fill="white" stroke="#d7e4e9"/>
+<text x="1104" y="575" font-size="22" fill="#055668" font-weight="600" text-anchor="start" class="mono">vrp-basemap</text>
+<text x="1104" y="610" font-size="17" fill="#153c4a" font-weight="400" text-anchor="start">PMTiles extraction / validation</text>
+<text x="1104" y="642" font-size="16" fill="#56727e" font-weight="400" text-anchor="start">Display only; separate from routing</text>
+<path d="M312 389 H384" fill="none" stroke="#055668" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<path d="M312 529 H334 V433 H384" fill="none" stroke="#055668" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<path d="M1008 402 H1080" fill="none" stroke="#055668" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<path d="M524 474 V540" fill="none" stroke="#055668" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<rect x="444" y="496" width="160" height="26" rx="2" fill="#eaf2f5" stroke="none"/>
+<text x="524" y="515" font-size="14" fill="#055668" font-weight="600" text-anchor="middle">Protobuf IPC</text>
+<path d="M854 474 V540" fill="none" stroke="#055668" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<text x="875" y="514" font-size="14" fill="#56727e" font-weight="400" text-anchor="start">Geo tasks</text>
+<path d="M1008 448 H1058 V608 H1080" fill="none" stroke="#055668" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<path d="M312 667 H348 V608 H384" fill="none" stroke="#055668" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<rect x="356" y="754" width="1044" height="238" rx="14" fill="#e5f3f6" stroke="#b9d6e0"/>
+<text x="792" y="785" font-size="16" fill="#055668" font-weight="600" text-anchor="start">04 / COMPILE AND SOLVE</text>
+<rect x="384" y="810" width="318" height="150" rx="12" fill="white" stroke="#d7e4e9"/>
+<text x="408" y="849" font-size="25" fill="#055668" font-weight="600" text-anchor="start" class="mono">vrp-model</text>
+<text x="408" y="886" font-size="18" fill="#153c4a" font-weight="400" text-anchor="start">Validate · estimate · compile</text>
+<text x="408" y="922" font-size="17" fill="#56727e" font-weight="400" text-anchor="start">Protocol ↔ internal model / result</text>
+<rect x="768" y="810" width="604" height="150" rx="10" fill="#153c4a" stroke="none"/>
+<text x="792" y="849" font-size="25" fill="white" font-weight="700" text-anchor="start" class="mono">vrp-core</text>
+<rect x="1212" y="828" width="136" height="32" rx="6" fill="#285362" stroke="none"/>
+<text x="1280.0" y="850" font-size="15" fill="#a4e9fa" font-weight="600" text-anchor="middle">STD ONLY</text>
+<text x="792" y="887" font-size="18" fill="#e6f3f7" font-weight="400" text-anchor="start">Parallel search · incremental scoring · independent oracle</text>
+<text x="792" y="926" font-size="17" fill="#a9d5e1" font-weight="400" text-anchor="start">No I/O · no async · no global state · no protocol dependency</text>
+<path d="M524 676 V810" fill="none" stroke="#055668" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<rect x="432" y="722" width="184" height="26" rx="2" fill="#f3f8fa" stroke="none"/>
+<text x="524" y="741" font-size="15" fill="#055668" font-weight="600" text-anchor="middle" class="mono">SolveRequest</text>
+<path d="M176 722 V885 H384" fill="none" stroke="#055668" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<rect x="182" y="797" width="154" height="28" rx="2" fill="#f3f8fa" stroke="none"/>
+<text x="194" y="817" font-size="16" fill="#56727e" font-weight="400" text-anchor="start">Direct solve</text>
+<path d="M702 884 H768" fill="none" stroke="#055668" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<text x="735" y="865" font-size="13" fill="#055668" font-weight="500" text-anchor="middle">Model</text>
+<text x="40" y="1030" font-size="16" fill="#56727e" font-weight="400" text-anchor="start">Lines show main calls / data flow, not every crate dependency.</text>
+<text x="1400" y="1030" font-size="16" fill="#055668" font-weight="500" text-anchor="end">Core boundary: docs/architecture.md</text>
+</svg>
