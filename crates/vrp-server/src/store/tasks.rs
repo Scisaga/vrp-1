@@ -195,6 +195,17 @@ impl Store {
         Ok(())
     }
 
+    pub(crate) fn task_by_key(&self, key: &str) -> Result<Option<pb::Task>> {
+        let data: Option<Vec<u8>> = self
+            .conn
+            .query_row("SELECT meta FROM generic_tasks WHERE idem=?1", [key], |r| {
+                r.get(0)
+            })
+            .optional()?;
+        data.map(|bytes| pb::Task::decode(bytes.as_slice()).map_err(Into::into))
+            .transpose()
+    }
+
     pub(crate) fn insert_task(
         &mut self,
         mut task: pb::Task,

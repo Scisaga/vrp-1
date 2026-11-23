@@ -8,7 +8,7 @@ import {
   addProtocol,
 } from "/vendor/maplibre-gl.mjs";
 import { list, esc, label } from "./schedule.js";
-import { taskActive } from "./tasks.js";
+import { taskActive, taskKind, taskState } from "./tasks.js";
 import { configureBasemaps, resolveBasemap, basemapStatus, mapRequest } from './basemaps.js';
 
 let api,
@@ -363,9 +363,19 @@ function updateGeometryHint() {
   caption.querySelector('[data-road-plan-hint]')?.remove();
   const {view,ctx,readonly} = current;
   const id = view.job?.id;
-  if (readonly || ctx.op || view.op || !id || !geometry.has(id) || list(geometry.get(id)?.legs).length) return;
+  if (!id) return;
+  const pathTask = list(ctx.tasks).find(t => t.resultJobId === id && taskKind(t) === 'GEOMETRY_GENERATE');
+  const legs = list(geometry.get(id)?.legs);
   const hint = document.createElement('div');
   hint.dataset.roadPlanHint = '';
+  if (pathTask || view.op) {
+    if (pathTask && taskActive(pathTask) && !legs.length) hint.textContent = '道路折线生成中，当前先显示排程与访问顺序。';
+    else if (pathTask && !['SUCCEEDED', 'PARTIAL'].includes(taskState(pathTask)) && !legs.length) hint.textContent = '道路折线生成失败，当前以虚线显示访问顺序。';
+    else if (geometry.has(id) && !legs.length) hint.textContent = '当前方案暂无道路折线，虚线为访问顺序示意。';
+    if (hint.textContent) caption.append(hint);
+    return;
+  }
+  if (readonly || ctx.op || !geometry.has(id) || legs.length) return;
   const pending = ctx.geoTask && taskActive(ctx.geoTask);
   const preparedHere = ctx.geoTask?.resultJobId === id;
   hint.textContent = pending ? preparedHere ? '道路路径准备中，完成后自动显示。' : '新的道路规划正在生成，历史方案保持访问顺序示意。' : preparedHere

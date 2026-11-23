@@ -1,0 +1,5 @@
+[mcp_servers.psiai]
+url = "http://127.0.0.1:8080/mcp"
+
+# For a LAN deployment and a client environment with the matching token:
+# bearer_token_env_var = "VRP_API_TOKEN"

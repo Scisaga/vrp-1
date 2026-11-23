@@ -14,6 +14,8 @@ use vrp_import_v1::Imported;
 use vrp_model::Compiled;
 use vrp_proto::engine::v1 as pb;
 
+mod plan_eval;
+
 const USAGE: &str = "用法：
   vrp import-v1 <v1 场景.json> <输出.pb>
   vrp export-scene <v1 请求.json> <原生场景.json> --id <稳定ID>
@@ -23,6 +25,8 @@ const USAGE: &str = "用法：
             --solution 取另一份文件里的指派，--matrix 取另一份文件里的矩阵
             --weight 覆盖约束权重，可重复，例如 --weight balance_agent_loading=1soft
             --show 列出某条约束的前 20 条明细
+  vrp eval-plan <冻结请求.pb | 原生请求.json> <有序工单方案.json>
+                [--baseline <原方案.json>] [--urgent-ticket <工单ID>]
   vrp bench [--corpus <目录>] [--moves <每个场景的随机改动数>]
             目录优先级：--corpus > VRP_CORPUS_DIR > ./corpus（从项目根目录执行）
             存在 bench.txt 时只运行其中的请求相对路径，否则递归读取 JSON
@@ -43,6 +47,7 @@ fn main() -> ExitCode {
         Some("import-v1") => import_v1(&args[1..]),
         Some("export-scene") => export_scene(&args[1..]),
         Some("eval") => eval(&args[1..]),
+        Some("eval-plan") => plan_eval::run(&args[1..]),
         Some("bench") => bench(&args[1..]),
         Some("solve") => solve(&args[1..], false),
         Some("solve-isolated") => solve(&args[1..], true),

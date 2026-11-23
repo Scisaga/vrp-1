@@ -17,6 +17,7 @@ prost.workspace = true
 serde = "1"
 serde_json.workspace = true
 axum = "0.8"
+rmcp = { version = "3.11", default-features = false, features = ["server", "macros", "transport-streamable-http-server"] }
 tokio = { version = "1", features = ["macros", "rt-multi-thread", "net", "signal", "sync", "time", "fs", "io-util"] }
 rusqlite = { version = "0.41", features = ["bundled"] }
 async-stream = "0.3"

@@ -23,6 +23,11 @@ Windows 可执行 `powershell -File scripts/package-windows.ps1`，在被忽略�
 | 参数 | 默认 | 说明 |
 |---|---:|---|
 | `--bind` | `127.0.0.1:8080` | 监听地址 |
+| `--mcp-origin` | 未启用 | 启用同端口 `/mcp`，值为客户端可访问的 HTTP(S) 来源。见 [WorkBuddy 与 Codex 接入](workbuddy-mcp.md)。 |
+| `--mcp-threads` | 总额度内最多 4 | 每次 MCP 求解使用的线程数，不超过 `--total-threads`。 |
+| `--mcp-search-ms` | 30000 | MCP 求解的搜索预算，单位毫秒。 |
+| `--mcp-search-strategy` | baseline | MCP 求解策略，可设为 `baseline` 或 `nearest`。 |
+| `--mcp-default-scenario` | 未绑定 | `ID@VERSION`。允许初排工具省略场景和版本，启动时校验该版本存在。 |
 | `--data-dir` | `var` | SQLite 数据目录；只允许一个服务实例持有 |
 | `--cpu-multiplier` | 1.0 | 总线程额度为 `max(1,floor(CPU×倍数))`，也可通过 `VRP_CPU_MULTIPLIER` 设置 |
 | `--total-threads` | 未设置 | 显式指定部署额度，优先于 CPU 倍数，适合容器配额 |

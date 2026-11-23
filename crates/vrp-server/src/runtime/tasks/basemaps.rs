@@ -208,6 +208,29 @@ impl Service {
         let (context, key, bounds) = self.basemap_context(context)?;
         let state = self.state()?;
         let selected = state.store.basemap_binding(&key)?;
+        let scenario = if !context.job_id.is_empty() {
+            state.store.job(job_id(&context.job_id)?)?.scenario
+        } else if !context.operation_id.is_empty() {
+            state
+                .store
+                .operation(&context.operation_id, context.version)?
+                .and_then(|op| op.scenario)
+        } else {
+            Some(pb::ScenarioRef {
+                scenario_id: context.scenario_id.clone(),
+                version: context.version,
+            })
+        };
+        // A user-selected package can also serve a later scenario revision, a
+        // result, or an execution snapshot when it still covers those bounds.
+        let inherited = scenario
+            .map(|reference| {
+                state
+                    .store
+                    .scene_basemap_bindings(&reference.scenario_id, reference.version)
+            })
+            .transpose()?
+            .unwrap_or_default();
         let all = state.store.basemaps()?;
         let usable = |p: &&maps::BasemapPackage| {
             p.enabled
@@ -218,6 +241,11 @@ impl Service {
             .iter()
             .filter(usable)
             .find(|p| p.id == selected)
+            .or_else(|| {
+                inherited
+                    .iter()
+                    .find_map(|id| all.iter().filter(usable).find(|p| &p.id == id))
+            })
             .or_else(|| {
                 all.iter()
                     .filter(usable)

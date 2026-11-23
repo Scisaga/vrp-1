@@ -113,6 +113,77 @@ fn new_task(
     }
 }
 impl Service {
+    pub(crate) fn queue_plan_geometry(&self, job: &pb::Job) -> Result<Option<pb::Task>> {
+        let Some(reference) = job.scenario.as_ref() else {
+            return Ok(None);
+        };
+        let key = format!("mcp-geometry-{}", job.id);
+        let mut state = self.state()?;
+        if let Some(task) = state.store.task_by_key(&key)? {
+            return Ok(Some(task));
+        }
+        let (_, bytes) = state
+            .store
+            .scenario(&reference.scenario_id, reference.version)?;
+        let request = engine::SolveRequest::decode(bytes.as_slice())?;
+        let problem = request.problem.as_ref().unwrap();
+        let coordinates = coordinate_hash(&request);
+        let tasks = state.store.tasks()?;
+        // Match the original business snapshot. Its locations and matrices survive
+        // projection; the candidate may have different tickets and live positions.
+        let source = tasks
+            .iter()
+            .filter(|task| {
+                task.kind() == pb::TaskKind::MatrixPrepare
+                    && task.state() == pb::TaskState::Succeeded
+                    && (task.coordinate_hash.is_empty() || task.coordinate_hash == coordinates)
+            })
+            .find_map(|task| {
+                let request_path = state.store.artifact_path(&task.id, "request").ok()?;
+                let bytes = fs::read(request_path).ok()?;
+                let snapshot = engine::SolveRequest::decode(bytes.as_slice())
+                    .ok()?
+                    .problem?;
+                if snapshot.locations != problem.locations || snapshot.matrices != problem.matrices
+                {
+                    return None;
+                }
+                let path = state.store.artifact_path(&task.id, "network").ok()?;
+                Some((task, path))
+            });
+        let Some((source, path)) = source else {
+            return Ok(None);
+        };
+        self.accepting()?;
+        let geometry = pb::GeometryGenerateInput {
+            job_id: job.id.clone(),
+            network_artifact: path.to_string_lossy().into(),
+            road_package_ids: source.road_package_ids.clone(),
+        };
+        let input = pb::TaskInput {
+            input: Some(pb::task_input::Input::Geometry(geometry)),
+            ..Default::default()
+        };
+        let mut task = new_task(
+            pb::TaskKind::GeometryGenerate,
+            job.scenario.clone(),
+            "",
+            &key,
+        );
+        task.result_job_id.clone_from(&job.id);
+        task.road_package_ids.clone_from(&source.road_package_ids);
+        task.dependency_ids = vec![source.id.clone(), job.id.clone()];
+        let task = state.store.insert_task(task, &input)?;
+        self.inner.changed.notify_all();
+        Ok(Some(task))
+    }
+
+    pub(crate) fn plan_geometry_task(&self, job_id: &str) -> Result<Option<pb::Task>> {
+        self.state()?
+            .store
+            .task_by_key(&format!("mcp-geometry-{job_id}"))
+    }
+
     fn task_resources(&self, task: &mut pb::Task, state: &State) {
         if task.resource_request.is_none() {
             task.resource_request = Some(if let Some(job) = &task.solver {
@@ -831,7 +902,15 @@ impl Service {
                 s.task_active.contains_key(&t.id) && t.kind() == pb::TaskKind::BasemapPrepare
             });
             let eligible = |t: &&pb::Task| {
-                t.state() == pb::TaskState::Queued && !s.task_active.contains_key(&t.id)
+                if t.state() != pb::TaskState::Queued || s.task_active.contains_key(&t.id) {
+                    return false;
+                }
+                t.kind() != pb::TaskKind::GeometryGenerate
+                    || t.result_job_id.is_empty()
+                    || job_id(&t.result_job_id)
+                        .and_then(|id| s.store.job(id))
+                        .ok()
+                        .is_none_or(|job| terminal(&job))
             };
             let package = if package_running < 2 {
                 tasks.iter().rev().filter(eligible).find(|t| {

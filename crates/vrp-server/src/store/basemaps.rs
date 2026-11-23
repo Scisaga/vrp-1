@@ -74,6 +74,23 @@ impl Store {
             .optional()?
             .unwrap_or_default())
     }
+
+    pub(crate) fn scene_basemap_bindings(&self, id: &str, version: u64) -> Result<Vec<String>> {
+        let prefix = format!("scene:{id}:");
+        let mut query = self.conn.prepare(
+            "SELECT package_id FROM basemap_refs
+             WHERE substr(owner,1,?1)=?2 AND CAST(substr(owner,?1+1) AS INTEGER)<=?3
+             ORDER BY CAST(substr(owner,?1+1) AS INTEGER) DESC",
+        )?;
+        query
+            .query_map(
+                params![prefix.len() as i64, prefix, version as i64],
+                |row| row.get(0),
+            )?
+            .collect::<std::result::Result<_, _>>()
+            .map_err(Into::into)
+    }
+
     pub(crate) fn bind_basemap(
         &mut self,
         key: &str,

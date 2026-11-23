@@ -1,5 +1,6 @@
 use super::*;
 use crate::operations as execution;
+use std::collections::BTreeSet;
 use vrp_core::ConstraintId as C;
 
 impl Service {
@@ -145,6 +146,210 @@ impl Service {
     pub fn replan(&self, request: pb::ReplanRequest) -> Result<pb::Job> {
         self.replan_from(request, "")
     }
+
+    pub(crate) fn replan_change(&self, change: pb::ReplanChangeRequest) -> Result<pb::Job> {
+        scenario_id(&change.scenario_id)?;
+        if change.request_id.is_empty()
+            || change.request_id.len() > 128
+            || !change.request_id.bytes().all(|b| b.is_ascii_graphic())
+            || (change.urgent_ticket.is_none() && change.disabled_agent_id.is_empty())
+        {
+            return Err(AppError::invalid(
+                "a request ID (1..128 visible ASCII) and at least one change are required",
+            ));
+        }
+        let key = format!(
+            "mcp-replan-{:x}",
+            Sha256::digest(format!("{}:{}", change.scenario_id, change.request_id))
+        );
+        let fingerprint = Sha256::digest(change.encode_to_vec());
+        let mut state = self.state()?;
+        if let Some(job) = state.store.idempotent(&key, &fingerprint)? {
+            return Ok(job);
+        }
+        self.accepting()?;
+        if state.store.queued()? >= self.inner.config.max_queued {
+            return Err(AppError::new("capacity", "task queue is full"));
+        }
+        let mut op = state
+            .store
+            .operation(&change.scenario_id, 0)?
+            .ok_or_else(|| AppError::new("not_found", "operation not found"))?;
+        execution::require_revision(&op, change.expected_revision)?;
+        if op.closed || op.plan.is_none() || op.policy.as_ref().is_some_and(|p| p.auto_adopt) {
+            return Err(AppError::conflict(
+                "MCP replan requires an active published plan and manual adoption",
+            ));
+        }
+        let reference = op.scenario.as_ref().unwrap();
+        let (scene, bytes) = state
+            .store
+            .scenario(&reference.scenario_id, reference.version)?;
+        let mut business = engine::SolveRequest::decode(bytes.as_slice())?;
+        let now = now_ms();
+        let at = execution::at(&op, now);
+        let update = change
+            .urgent_ticket
+            .as_ref()
+            .map(|ticket| {
+                self.insert_service_ticket(&mut op, &scene, &mut business, ticket, at, now)
+            })
+            .transpose()?;
+        let event = if change.disabled_agent_id.is_empty() {
+            None
+        } else {
+            let event = pb::ExecutionEvent {
+                scenario_id: change.scenario_id.clone(),
+                expected_revision: op.revision,
+                event_id: key.clone(),
+                at,
+                actor: "MCP".into(),
+                vehicles: vec![pb::VehicleUpdate {
+                    agent_id: change.disabled_agent_id,
+                    phase: Some(pb::VehiclePhase::Unavailable as i32),
+                    ..Default::default()
+                }],
+                ..Default::default()
+            };
+            execution::apply_event(&mut op, execution::problem(&business)?, &event, now)?;
+            Some((event, op.clone()))
+        };
+        let mut projected = execution::project(&business, &op, at, change.options)?;
+        vrp_model::prepare_matrices(&mut projected).map_err(|e| AppError::invalid(e.0))?;
+        vrp_model::validate_ready_matrices(&projected).map_err(|e| AppError::invalid(e.0))?;
+        let threads = self.validate(&projected)?;
+        let command = pb::ReplanRequest {
+            scenario_id: change.scenario_id,
+            expected_revision: op.revision,
+            options: change.options,
+        };
+
+        let job = state.store.atomic(|store| {
+            if let Some((request, business_op)) = update {
+                let saved = store.save_scenario(&request, &business.encode_to_vec())?;
+                store.save_operation(
+                    &business_op,
+                    "business_update",
+                    &saved.encode_to_vec(),
+                    None,
+                    &[],
+                )?;
+            }
+            if let Some((event, event_op)) = event {
+                let bytes = event.encode_to_vec();
+                store.save_operation(
+                    &event_op,
+                    "event",
+                    &bytes,
+                    Some(&key),
+                    &Sha256::digest(&bytes),
+                )?;
+            }
+            let job = store.insert_job(
+                queued_replan(&op, threads, at, ""),
+                &projected.encode_to_vec(),
+                &key,
+                &fingerprint,
+            )?;
+            record_replan(store, &mut op, &job, &command)?;
+            Ok(job)
+        })?;
+        self.inner.changed.notify_all();
+        Ok(job)
+    }
+
+    fn insert_service_ticket(
+        &self,
+        op: &mut pb::Operation,
+        scene: &pb::Scenario,
+        business: &mut engine::SolveRequest,
+        ticket: &pb::UrgentServiceTicket,
+        at: i64,
+        now: i64,
+    ) -> Result<(pb::SaveScenarioRequest, pb::Operation)> {
+        if ticket.ticket_id.is_empty()
+            || ticket.ticket_id.len() > 128
+            || ticket.ticket_id.starts_with("@vrp/")
+            || ticket.duration_seconds <= 0
+            || ticket.latest_start_seconds < at
+        {
+            return Err(AppError::invalid(
+                "invalid urgent ticket ID, duration or deadline",
+            ));
+        }
+        let previous = business.clone();
+        let problem = business.problem.as_mut().unwrap();
+        if problem.tickets.iter().any(|t| t.id == ticket.ticket_id) {
+            return Err(AppError::conflict("urgent ticket ID already exists"));
+        }
+        if !ticket.skills_required.is_empty() {
+            let skills = problem
+                .agents
+                .iter()
+                .flat_map(|agent| agent.skills.iter().map(String::as_str))
+                .collect::<BTreeSet<_>>();
+            if let Some(skill) = ticket
+                .skills_required
+                .iter()
+                .find(|skill| !skills.contains(skill.as_str()))
+            {
+                return Err(AppError::invalid(format!(
+                    "Unknown skill ID {skill:?}. Use an exact skill ID from the scenario: {}",
+                    skills.into_iter().collect::<Vec<_>>().join(", ")
+                )));
+            }
+        }
+        let location = problem
+            .locations
+            .iter()
+            .position(|l| l.id == ticket.location_id)
+            .ok_or_else(|| {
+                AppError::invalid("urgent ticket must use an existing matrix location")
+            })?;
+        let day = problem
+            .horizon
+            .as_ref()
+            .filter(|h| !h.day_starts.is_empty())
+            .map_or(at.div_euclid(86_400), |h| {
+                h.day_starts
+                    .partition_point(|start| *start <= at)
+                    .saturating_sub(1) as i64
+            });
+        problem.tickets.push(engine::Ticket {
+            id: ticket.ticket_id.clone(),
+            location: location as u32,
+            duration: ticket.duration_seconds,
+            earliest_start: at,
+            latest_start: ticket.latest_start_seconds,
+            day: i32::try_from(day)
+                .map_err(|_| AppError::invalid("urgent ticket day out of range"))?,
+            skills_required: ticket.skills_required.clone(),
+            ..Default::default()
+        });
+        self.validate(business)?;
+        op.at = at;
+        op.clock_unix_ms = now;
+        execution::synchronize(op, Some(&previous), business)?;
+        let next = scene
+            .version
+            .checked_add(1)
+            .filter(|v| *v <= i64::MAX as u64)
+            .ok_or_else(|| AppError::conflict("scenario version exhausted"))?;
+        op.scenario.as_mut().unwrap().version = next;
+        execution::mark_dirty(op, now, true);
+        op.revision += 1;
+        Ok((
+            pb::SaveScenarioRequest {
+                scenario_id: scene.id.clone(),
+                name: scene.name.clone(),
+                expected_version: scene.version,
+                request: Some(business.clone()),
+                ..Default::default()
+            },
+            op.clone(),
+        ))
+    }
+
     pub(super) fn replan_from(
         &self,
         request: pb::ReplanRequest,
@@ -175,31 +380,12 @@ impl Service {
         }
         let job = state.store.atomic(|store| {
             let job = store.insert_job(
-                pb::Job {
-                    scenario: op.scenario.clone(),
-                    kind: pb::JobKind::RealtimeReplan as i32,
-                    source_job_id: source_job_id.to_owned(),
-                    state: pb::JobState::Queued as i32,
-                    threads,
-                    revision: 1,
-                    created_unix_ms: now_ms(),
-                    execution_basis: Some(pb::ExecutionBasis {
-                        scenario_id: request.scenario_id.clone(),
-                        execution_version: op.execution_version,
-                        plan_version: op.plan.as_ref().map_or(0, |p| p.version),
-                        at,
-                    }),
-                    ..Default::default()
-                },
+                queued_replan(&op, threads, at, source_job_id),
                 &bytes,
                 "",
                 &Sha256::digest(&bytes),
             )?;
-            current.latest_job_id = job.id.clone();
-            current.needs_replan = false;
-            current.planning_error = None;
-            current.revision += 1;
-            store.save_operation(&current, "replan", &request.encode_to_vec(), None, &[])?;
+            record_replan(store, &mut current, &job, &request)?;
             Ok(job)
         })?;
         self.inner.changed.notify_all();
@@ -596,4 +782,36 @@ impl Service {
             eprintln!("execution completion: {}", error.code);
         }
     }
+}
+
+fn queued_replan(op: &pb::Operation, threads: u32, at: i64, source: &str) -> pb::Job {
+    pb::Job {
+        scenario: op.scenario.clone(),
+        kind: pb::JobKind::RealtimeReplan as i32,
+        source_job_id: source.to_owned(),
+        state: pb::JobState::Queued as i32,
+        threads,
+        revision: 1,
+        created_unix_ms: now_ms(),
+        execution_basis: Some(pb::ExecutionBasis {
+            scenario_id: op.scenario.as_ref().unwrap().scenario_id.clone(),
+            execution_version: op.execution_version,
+            plan_version: op.plan.as_ref().map_or(0, |p| p.version),
+            at,
+        }),
+        ..Default::default()
+    }
+}
+
+fn record_replan(
+    store: &mut crate::store::Store,
+    op: &mut pb::Operation,
+    job: &pb::Job,
+    request: &pb::ReplanRequest,
+) -> Result<()> {
+    op.latest_job_id.clone_from(&job.id);
+    op.needs_replan = false;
+    op.planning_error = None;
+    op.revision += 1;
+    store.save_operation(op, "replan", &request.encode_to_vec(), None, &[])
 }

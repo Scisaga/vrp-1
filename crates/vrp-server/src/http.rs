@@ -20,6 +20,7 @@ use std::time::Duration;
 use tokio::sync::Semaphore;
 use vrp_proto::{app::v1 as pb, engine::v1 as engine};
 mod basemaps;
+mod mcp;
 mod tasks;
 
 #[derive(Clone)]
@@ -35,6 +36,27 @@ struct HttpState {
 }
 
 pub fn router(service: Service, token: Option<String>) -> Router {
+    build_router(service, token, None)
+}
+
+pub fn router_with_mcp(
+    service: Service,
+    token: Option<String>,
+    origin: &str,
+    options: engine::SolveOptions,
+    default_scenario: Option<pb::ScenarioRef>,
+) -> Result<Router> {
+    if let Some(scenario) = &default_scenario {
+        service.get_scenario_metadata(&scenario.scenario_id, scenario.version)?;
+    }
+    Ok(build_router(
+        service,
+        token,
+        Some(mcp::Endpoint::parse(origin, options, default_scenario)?),
+    ))
+}
+
+fn build_router(service: Service, token: Option<String>, mcp: Option<mcp::Endpoint>) -> Router {
     let csp = crate::maps::csp(&service.map_config())
         .parse()
         .expect("validated map CSP");
@@ -48,7 +70,7 @@ pub fn router(service: Service, token: Option<String>) -> Router {
         map_operations: Arc::new(Semaphore::new(8)),
         csp,
     };
-    Router::new()
+    let router = Router::new()
         .route("/v1/basemap-packages", get(basemaps::list))
         .route("/v1/basemap-packages/prepare", post(basemaps::prepare))
         .route("/v1/basemap-packages/estimate", post(basemaps::estimate))
@@ -231,7 +253,12 @@ pub fn router(service: Service, token: Option<String>) -> Router {
         .route("/v1/operations/{id}/replan", post(replan))
         .route("/v1/operations/{id}/adopt", post(adopt_plan))
         .route("/v1/operations/{id}/ack", post(acknowledge_plan))
-        .route("/v1/operations/{id}/close", post(close_operation))
+        .route("/v1/operations/{id}/close", post(close_operation));
+    let router = match mcp {
+        Some(endpoint) => router.route_service("/mcp", endpoint.service(state.clone())),
+        None => router,
+    };
+    router
         .fallback(|| async { AppError::new("not_found", "endpoint not found") })
         .method_not_allowed_fallback(|| async {
             AppError::new("method_not_allowed", "HTTP method not supported")
@@ -355,6 +382,20 @@ async fn guard(State(state): State<HttpState>, request: Request, next: Next) -> 
     };
     let Ok(permit) = semaphore.try_acquire_owned() else {
         return AppError::new("capacity", "HTTP concurrency limit reached").into_response();
+    };
+    let request = if request.uri().path() == "/mcp" && request.method() == axum::http::Method::POST
+    {
+        let (parts, body) = request.into_parts();
+        match tokio::time::timeout(Duration::from_secs(10), to_bytes(body, mcp::BODY_LIMIT)).await {
+            Ok(Ok(bytes)) => Request::from_parts(parts, Body::from(bytes)),
+            Ok(Err(_)) => {
+                return AppError::new("too_large", "MCP request body is too large or unreadable")
+                    .into_response();
+            }
+            Err(_) => return StatusCode::REQUEST_TIMEOUT.into_response(),
+        }
+    } else {
+        request
     };
     let response = next.run(request).await;
     let (mut parts, body) = response.into_parts();

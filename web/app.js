@@ -64,6 +64,10 @@ import { renderPackageTabs, renderBasemapPackages, packageCoverage, boundsText, 
 // Version/CAS values remain ProtoJSON strings. Each async operation captures its
 // scene context; switching the UI cannot redirect an in-flight write or response.
 const $ = (id) => document.getElementById(id);
+const panelMode = new URLSearchParams(location.search).get("view") === "panel";
+document.documentElement.classList.toggle("result-link-layout", panelMode);
+document.querySelector(".app-header").hidden = panelMode;
+$("sidebar").hidden = panelMode;
 const state = {
   token: "",
   view: "scene",
@@ -205,13 +209,15 @@ function rememberView(c) {
   }
 }
 function routeHash(c) {
-  if (c)
+  if (panelMode) return;
+  if (c) {
+    const job = c.tab === "plans" ? c.selectedJob : c.tab === "operations" ? c.liveJob : "";
     history.replaceState(
       null,
       "",
-      `#scene/${encodeURIComponent(c.id)}/${c.tab}${c.tab === "plans" && c.selectedJob ? "/" + encodeURIComponent(c.selectedJob) : ""}`,
+      `#scene/${encodeURIComponent(c.id)}/${c.tab}${job ? "/" + encodeURIComponent(job) : ""}`,
     );
-  else history.replaceState(null, "", `#${state.view}${state.view === 'tasks' && state.taskDetail ? '/' + encodeURIComponent(state.taskDetail.id) : state.view === 'roads' ? state.packageTab==='basemaps' ? '/basemaps' + (state.basemapDetail ? '/' + encodeURIComponent(state.basemapDetail.id) : '') : state.roadDetail ? '/' + encodeURIComponent(state.roadDetail.id) : '' : ''}`);
+  } else history.replaceState(null, "", `#${state.view}${state.view === 'tasks' && state.taskDetail ? '/' + encodeURIComponent(state.taskDetail.id) : state.view === 'roads' ? state.packageTab==='basemaps' ? '/basemaps' + (state.basemapDetail ? '/' + encodeURIComponent(state.basemapDetail.id) : '') : state.roadDetail ? '/' + encodeURIComponent(state.roadDetail.id) : '' : ''}`);
 }
 function context(id) {
   if (!state.contexts.has(id))
@@ -245,7 +251,7 @@ async function loadScenes(more = false) {
   } while (!more && cursor && scenes.length < wanted);
   state.scenes = more ? [...state.scenes, ...scenes] : scenes;
   state.nextScenes = cursor;
-  renderSidebar();
+  if (!panelMode) renderSidebar();
 }
 async function loadScene(c) {
   if (c.deleted) return;
@@ -375,7 +381,11 @@ async function openScene(id, tab, job) {
   state.sceneId = id;
   state.view = "scene";
   if (tab) c.tab = tab;
-  if (job) c.selectedJob = job;
+  if (panelMode) c.panelJobId = job;
+  if (tab === "operations") {
+    c.liveJob = job || "";
+    c.compare = Boolean(job);
+  } else if (job) c.selectedJob = job;
   render();
   await loadScene(c);
   if (c.tab === "history" && c.op) {
@@ -383,10 +393,19 @@ async function openScene(id, tab, job) {
     if (!c.historySnapshot && c.historyEntries[0])
       await selectHistory(c, c.historyEntries[0].revision);
   }
-  if (job && !c.jobs.some((j) => j.id === job)) {
-    c.jobs.push(await api(`/v1/jobs/${job}`));
-    if (c.jobs.at(-1).hasResult) await loadResult(c, c.jobs.at(-1));
-    await loadTrend(c, c.jobs.at(-1));
+  if (job) {
+    const known = c.jobs.find((j) => j.id === job);
+    const result = known || await api(`/v1/jobs/${job}`);
+    if (result.scenario?.scenarioId !== id || (tab === "operations" && !result.executionBasis)) {
+      if (tab === "operations") { c.liveJob = ""; c.compare = false; }
+      else c.selectedJob = "";
+      throw new Error("此任务不属于当前场景的所选方案类型。");
+    }
+    if (!known) {
+      c.jobs.push(result);
+      if (result.hasResult) await loadResult(c, result);
+      await loadTrend(c, result);
+    }
   }
   if (state.sceneId === id && state.view === "scene") {
     routeHash(c);
@@ -443,11 +462,11 @@ function renderStatus() {
   return JSON.stringify([state.view, state.health, state.scenes, mapSettings()]);
 }
 async function refresh({ background = false } = {}) {
-  if (state.refreshing || state.busy) return;
+  if (state.refreshing || state.busy || (panelMode && !ctx())) return;
   state.refreshing = true;
   const target = viewKey(), view = state.view, c = ctx();
   try {
-    const [health] = await Promise.all([api("/healthz"), loadScenes()]);
+    const [health] = await Promise.all([api("/healthz"), panelMode ? undefined : loadScenes()]);
     state.health = health;
     if (view === "scene" && c) await loadScene(c);
     else if (view === "tasks") await loadGlobalJobs();
@@ -753,7 +772,7 @@ function renderWorkspace() {
     focusId = focus?.id,
     start = focus?.selectionStart,
     end = focus?.selectionEnd;
-  renderSidebar();
+  if (!panelMode) renderSidebar();
   renderHealth();
   document
     .querySelectorAll("[data-nav]")
@@ -768,6 +787,15 @@ function renderWorkspace() {
   $("scene-content").hidden = state.view !== "scene" || !c?.scene;
   state.renderedContext = state.view === "scene" ? c : null;
   if (state.view !== "scene") {
+    if (panelMode) {
+      const needsToken = state.panelError?.status === 401;
+      $("global-content").innerHTML = empty(
+        needsToken ? "打开场景方案" : "无法打开场景方案",
+        needsToken ? "输入服务访问令牌，打开此链接对应的方案。" : esc(state.panelError?.message || "请在 WorkBuddy 中打开方案链接。"),
+        needsToken ? action("connect", "输入访问令牌", "primary") : "",
+      );
+      return;
+    }
     $("global-content").innerHTML =
       state.view === "roads"
         ? renderPackageTabs(state) + (state.packageTab==='basemaps' ? renderBasemapPackages(state) : renderRoadPackages(state))
@@ -799,7 +827,8 @@ function renderWorkspace() {
       b.setAttribute("aria-selected", String(selected));
       b.tabIndex = selected ? 0 : -1;
     });
-  $("workspace-content").setAttribute("aria-labelledby", `workspace-tab-${c.tab}`);
+  $("workspace-content").setAttribute("role", panelMode ? "region" : "tabpanel");
+  $("workspace-content").setAttribute("aria-labelledby", panelMode ? "scene-title" : `workspace-tab-${c.tab}`);
   const job = currentJob(c),
     fresh = sourceFresh(c, job);
   let buttons = '<span id="scene-save-state" class="scene-save-state" role="status"></span>';
@@ -1016,18 +1045,26 @@ function comparisonControls(c, view, comparison = "") {
   return comparison + (view.baseline.length && view.job ? `<label><input id="compare" type="checkbox" ${c.compare ? "checked" : ""}>对比原安排</label>` : "");
 }
 function toolbar(c, view, live, comparison = "") {
+  if (panelMode) {
+    const controls = comparisonControls(c, view, comparison);
+    return controls ? `<div class="work-toolbar"><div class="actions">${controls}</div></div>` : "";
+  }
   return `<div class="work-toolbar"><div class="actions">${jobChoice(c, live)}</div><div class="actions">${comparisonControls(c, view, comparison)}${live ? (!view.job && c.op?.plan?.jobId ? action("task-info", "任务信息", "quiet", `data-job="${esc(c.op.plan.jobId)}"`) : "") + action("cargo", "装卸 / 交接") + action("close-operation", "结束执行", "quiet") : ""}</div></div>`;
 }
 function plansPanel(c) {
   const j = currentJob(c);
+  if (!j && panelMode)
+    return `<section class="panel">${empty("链接中的方案暂不可用", "请回到 WorkBuddy 查询本次任务状态。")}</section>`;
   if (!j)
     return `<section class="panel">${empty("从业务数据生成第一版方案", "准备道路矩阵后自动规划并生成道路路径；缺失路网的部分会标明几何估算。确认排程后可采用并进入执行。", action("go-data", "检查数据") + " " + action("geo-plan", "生成道路矩阵并规划", "primary", c.geoTask && taskActive(c.geoTask) ? 'disabled' : ''))}</section>`;
-  return progressPanel(c, j) + `<div data-plan-output data-plan-state="${jp(j)}">${planOutput(c, j)}</div>`;
+  return progressPanel(c, j, panelMode) +
+    `<div data-plan-output data-plan-state="${jp(j)}">${planOutput(c, j)}</div>`;
 }
 function planOutput(c, j) {
+  const choice = panelMode ? "" : planChoice(c,j);
   if (!j.hasResult)
     return (
-      `<section class="panel"><div class="plan-overview">${planChoice(c,j)}</div>${empty(jp(j) < 3 ? "方案正在计算" : "本次没有生成方案", j.error?.message || "每次求解独立保存输入与结果，可切换场景继续处理其他业务。")}</section>`
+      `<section class="panel">${choice ? `<div class="plan-overview">${choice}</div>` : ""}${empty(jp(j) < 3 ? "方案正在计算" : "本次没有生成方案", esc(j.error?.message || (panelMode ? "每次求解独立保存输入与结果。" : "每次求解独立保存输入与结果，可切换场景继续处理其他业务。")))}</section>`
     );
   const v = viewFor(c, j);
   if (!v.result) return '<div class="loading-small">正在读取结果…</div>';
@@ -1036,7 +1073,7 @@ function planOutput(c, j) {
     .filter((s) => !s.ticketId.startsWith("@vrp/")).length;
   const unassignedCount = list(v.result.unassigned).filter((t) => !v.input.problem.tickets[t.ticket || 0]?.id.startsWith("@vrp/")).length;
   const stale = j.scenario?.version !== c.scene.scenario.version;
-  const primary = c.op ? action("show-live", "进入执行调度") :
+  const primary = panelMode ? "" : c.op ? action("show-live", "进入执行调度") :
     stale ? action("geo-plan", "生成道路矩阵并重新规划", "primary", c.geoTask && taskActive(c.geoTask) ? 'disabled' : '') :
     action("start", "采用并进入执行", "primary", sourceFresh(c, j) ? "" : "disabled");
   const summary = metrics([
@@ -1059,7 +1096,7 @@ function planOutput(c, j) {
     ],
   ]);
   let comparison = "";
-  if (!c.op && c.jobs.some((other) => other.id !== j.id && other.hasResult))
+  if (!panelMode && !c.op && c.jobs.some((other) => other.id !== j.id && other.hasResult))
     comparison = `<div class="comparison-note"><label>对比基准 <select id="baseline-job"><option value="">不选择</option>${c.jobs
       .filter(
         (x) =>
@@ -1073,7 +1110,7 @@ function planOutput(c, j) {
       )
       .join("")}</select></label></div>`;
   const compare = comparisonControls(c, v, comparison);
-  let workspace = `<section class="panel plan-workspace"><div class="plan-overview">${planChoice(c,j)}${summary}${compare ? `<div class="actions plan-comparison">${compare}</div>` : ""}<div class="plan-primary-action">${primary}</div></div>`;
+  let workspace = `<section class="panel plan-workspace"><div class="plan-overview">${choice}${summary}${compare ? `<div class="actions plan-comparison">${compare}</div>` : ""}${primary ? `<div class="plan-primary-action">${primary}</div>` : ""}</div>`;
   if (stale)
     workspace += `<div class="plan-version-notice" role="status">${icon("alert")}<div class="plan-version-notice-text"><strong>业务数据已更新</strong><span>此方案基于业务 v${esc(j.scenario?.version)}，当前为 v${esc(c.scene.scenario.version)}，请重新规划。</span></div></div>`;
   return (
@@ -1091,12 +1128,14 @@ function unassignedPenalty(v, count) {
   return `${count} 未分配 → ${penalties.join(" / ") || "此项未产生罚分"}${penalties.length && !num(item.score?.hard) ? "（未计 Hard）" : ""}`;
 }
 function operationsPanel(c) {
+  if (!c.op && panelMode)
+    return `<section class="panel">${empty("执行计划暂不可用", "请回到 WorkBuddy 查询本次任务状态。")}</section>`;
   if (!c.op)
     return `<section class="panel">${empty("采用规划方案后开始执行调度", "先在“规划方案”中生成、检查并采用排程；这里记录实际出发、到达和完工，偏离计划时可实时重排。已有现场任务也可先接入执行状态。", action("go-plans", "查看规划方案", "primary") + " " + action("start-empty", "先接入执行状态", "quiet"))}</section>`;
   const o = c.op,
     j = c.liveJob ? currentJob(c) : null,
     v = viewFor(c, j),
-    latest = latestJob(c),
+    latest = panelMode ? c.jobs.find((job) => job.id === c.panelJobId) : latestJob(c),
     pending = list(o.tickets).filter((t) => ![3, 4, 5].includes(tp(t))),
     assigned = assignments(v.routes),
     unassigned = pending.filter((t) => !assigned.has(t.ticketId)).length,
@@ -1110,7 +1149,7 @@ function operationsPanel(c) {
     ["未安排", unassigned, "attention"],
     ["待确认执行单元", acks, acks ? "attention" : ""],
   ]);
-  html += `<div class="banner ${o.planStale ? "warning" : ""}"><span><strong>${j ? "候选 #" + esc(j.id) : o.plan ? "生效计划 v" + esc(o.plan.version) : "尚无生效计划"}</strong> · 持续重排 ${o.policy?.autoReplan ? "开启" : "关闭"} · ${o.policy?.autoAdopt ? "自动采用" : "人工确认"}${o.planStale ? " · 执行事实已变化，原计划待重新校验" : ""}</span>${active(c) ? action("policy", "调整策略", "quiet") : ""}</div>`;
+  html += `<div class="banner ${o.planStale ? "warning" : ""}"><span><strong>${j ? "候选 #" + esc(j.id) : o.plan ? "生效计划 v" + esc(o.plan.version) : "尚无生效计划"}</strong>${panelMode ? "" : ` · 持续重排 ${o.policy?.autoReplan ? "开启" : "关闭"} · ${o.policy?.autoAdopt ? "自动采用" : "人工确认"}`}${o.planStale ? " · 执行事实已变化，原计划待重新校验" : ""}</span>${!panelMode && active(c) ? action("policy", "调整策略", "quiet") : ""}</div>`;
   if (o.planningError)
     html += banner("重排未完成：" + esc(o.planningError.message), "error");
   if (latest && jp(latest) < 3) html += progressPanel(c, latest, true);
@@ -1132,13 +1171,13 @@ function operationsPanel(c) {
     html += banner(
       `候选尚未生效 · ${changes(v.baseline, v.routes).length} 张工单的执行单元、顺序或时间变化。${sourceFresh(c, j) ? "" : " 当前事实与候选输入不同，请先实时重排。"}`,
       "",
-      action("continue", "继续优化", "", sourceFresh(c, j) ? "" : "disabled") +
+      (panelMode ? "" : action("continue", "继续优化", "", sourceFresh(c, j) ? "" : "disabled") +
         action(
           "adopt",
           "采用候选",
           "primary",
           sourceFresh(c, j) ? "" : "disabled",
-        ) +
+        )) +
         action("show-published", "返回生效计划", "quiet"),
     );
   }
@@ -2413,14 +2452,15 @@ async function perform(name, el) {
         async (f) => {
           state.token = f.get("token");
           state.health = await api("/healthz");
-          await loadScenes();
-          if (state.sceneId) await openScene(state.sceneId);
+          if (!panelMode) await loadScenes();
+          if (panelMode || location.hash) await navigate();
+          else if (state.sceneId) await openScene(state.sceneId);
           else {
             state.view = "scenes";
             render();
           }
         },
-        { context: null, submit: "连接服务" },
+        { context: null, submit: "连接服务", message: panelMode ? "" : "操作已完成" },
       );
       break;
     case "matrix-prev":
@@ -2576,16 +2616,19 @@ async function perform(name, el) {
       await changeTab(c, "operations");
       break;
     case "show-candidate": {
-      const j = latestJob(c);
+      const j = panelMode ? c.jobs.find((job) => job.id === c.panelJobId) : latestJob(c);
+      if (!j) break;
       c.liveJob = j.id;
       c.compare = true;
       if (j.hasResult) await loadResult(c, j);
+      routeHash(c);
       render();
       break;
     }
     case "show-published":
       c.liveJob = "";
       c.compare = false;
+      routeHash(c);
       render();
       break;
     case "zoom-out":
@@ -2853,6 +2896,7 @@ document.addEventListener("change", (event) =>
           const j = currentJob(c);
           if (j) await Promise.all([j.hasResult ? loadResult(c, j) : null, loadTrend(c, j)]);
         }
+        routeHash(c);
         render();
         break;
       case "baseline-job":
@@ -2945,13 +2989,24 @@ window.addEventListener("beforeunload", (event) => {
 });
 async function navigate() {
   const parts = location.hash.slice(1).split("/");
+  if (panelMode) {
+    try {
+      if (parts.length !== 4 || parts[0] !== "scene" || !parts[1] ||
+          !["plans", "operations"].includes(parts[2]) || !/^\d+$/.test(parts[3]))
+        throw new Error("请从 WorkBuddy 打开一个有效的方案链接。");
+      await openScene(decodeURIComponent(parts[1]), parts[2], parts[3]);
+    } catch (error) {
+      showPanelError(error);
+    }
+    return;
+  }
   if (parts[0] === "scene" && parts[1])
     await openScene(
       decodeURIComponent(parts[1]),
       ["data", "plans", "operations", "history"].includes(parts[2])
         ? parts[2]
         : undefined,
-      parts[2] === "plans" && /^\d+$/.test(parts[3] || "") ? parts[3] : undefined,
+      ["plans", "operations"].includes(parts[2]) && /^\d+$/.test(parts[3] || "") ? parts[3] : undefined,
     );
   else if (["scenes", "roads", "tasks", "settings"].includes(parts[0])) {
     state.view = parts[0];
@@ -2972,6 +3027,13 @@ async function navigate() {
     render();
   }
 }
+function showPanelError(error) {
+  state.sceneId = "";
+  state.view = "panel-error";
+  state.panelError = error;
+  notice("");
+  render();
+}
 window.addEventListener("hashchange", () => safely(navigate));
 let resizeTimer;
 window.addEventListener("resize", () => {
@@ -2981,9 +3043,13 @@ window.addEventListener("resize", () => {
 (async () => {
   try {
     state.health = await api("/healthz");
-    await loadScenes();
+    if (!panelMode) await loadScenes();
     await navigate();
   } catch (e) {
+    if (panelMode) {
+      showPanelError(e);
+      return;
+    }
     state.view = "scenes";
     render();
     notice(e.message, true);
@@ -2992,5 +3058,8 @@ window.addEventListener("resize", () => {
 configureMap(api,()=>state.token);
 setInterval(() => {
   if (!state.refreshing && (!refreshBlocked() || canRefreshProgress()))
-    refresh({ background: true }).catch((e) => notice(e.message, true));
+    refresh({ background: true }).catch((e) => {
+      if (panelMode && e.status === 401) showPanelError(e);
+      else notice(e.message, true);
+    });
 }, 2500);

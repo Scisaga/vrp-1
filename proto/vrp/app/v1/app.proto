@@ -526,6 +526,22 @@ message ReplanRequest {
   uint64 expected_revision = 2;
   vrp.engine.v1.SolveOptions options = 3;
 }
+// An atomic business/execution change and candidate submission for MCP.
+message ReplanChangeRequest {
+  string scenario_id = 1;
+  uint64 expected_revision = 2;
+  string request_id = 3;
+  string disabled_agent_id = 4;
+  UrgentServiceTicket urgent_ticket = 5;
+  vrp.engine.v1.SolveOptions options = 6;
+}
+message UrgentServiceTicket {
+  string ticket_id = 1;
+  string location_id = 2;
+  int64 duration_seconds = 3;
+  int64 latest_start_seconds = 4;
+  repeated string skills_required = 5;
+}
 message AdoptPlanRequest {
   string scenario_id = 1;
   uint64 expected_revision = 2;
