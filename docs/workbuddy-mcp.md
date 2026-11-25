@@ -2,7 +2,7 @@
 
 vrp-server 可以在现有端口提供 Streamable HTTP MCP。MCP 与工作台共用场景、任务队列、求解、执行快照和道路折线。启动时用 `--mcp-origin` 启用 `/mcp`，该值同时是允许访问的 HTTP 来源和返回给客户端的工作台地址。
 
-同一台电脑可直接把部署提示词交给 WorkBuddy，从本机启动到样例求解。[智能体本地部署指引](agent-local-quickstart.md)
+可先用通用提示词在本机启动服务、下载地图包并生成首个道路方案，再按本页接入 MCP。[智能体本地部署指引](agent-local-quickstart.md)
 
 ## Windows 启动
 
@@ -35,6 +35,8 @@ cargo build --release -p vrp-server -p vrp-cli
 ## 已知场景的单次调用
 
 场景、版本或执行修订已知时直接调用相应工具。默认异步返回任务号。为短时求解传入 `waitForResult: true` 后，服务订阅求解状态，至多等待 10 秒。返回已通过引擎全量评分的结果摘要时，可直接呈现链接和关键指标。道路折线另行生成，状态随工作台更新。若仍在排队、路网矩阵正在准备或超过等待时间，回复保留任务号，之后可用 `get_plan`。有序指派只在独立验分需要时读取，由采集脚本从同一任务取回。
+
+交付沿路方案时，若 `geometryState` 为 `waiting`、`queued` 或 `running`，按原 `taskId` 继续查询。完成后回复实际道路段数 `roadLegs`、总段数 `totalLegs` 和覆盖状态，失败时给出 `geometryMessage`。需要用道路矩阵重新规划已有场景或同时准备离线底图时，使用[首跑命令](agent-local-quickstart.md#用一个本地样例验收)。
 
 启动时加 `--mcp-default-scenario wb-initial@1` 可将初排绑定到该场景的第 1 版。发送「把今天的工单排一下」时，客户端给 `solve_plan` 生成新的 `requestId` 即可，省去读取场景列表和版本。使用该默认场景时，工具默认同时等待摘要和链接。响应携带提交、开始与完成时刻，便于把模型等待、引擎和结果展示分开计时。已有 `viewUrl` 时，可直接打开读取进度和结果。
 

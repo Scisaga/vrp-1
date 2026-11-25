@@ -96,7 +96,7 @@
 
 ## 部署与快速开始
 
-可把提示词交给 WorkBuddy，完成本机启动、MCP 接入和样例排程。[智能体本地部署指引](docs/agent-local-quickstart.md)
+可用通用智能体提示词启动本机服务、下载地图包并生成首个道路方案。[智能体本地部署指引](docs/agent-local-quickstart.md)
 
 源码构建需要支持 Rust 2024 Edition 的工具链及系统编译工具。服务运行时无需安装 Node.js、SQLite 服务或 protoc；浏览器界面和前端库随程序提供。
 

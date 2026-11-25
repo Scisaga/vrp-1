@@ -198,7 +198,7 @@ impl Planner {
     }
 
     #[tool(
-        description = "安排工单，生成车辆路线图和甘特图 (plan work orders and return their route and Gantt view). For the configured scene, call with only a fresh requestId. Otherwise supply scenarioId and expectedVersion. Use the returned viewUrl directly; pending views update in the workbench."
+        description = "安排工单，生成车辆路线图和甘特图 (plan work orders and return their route and Gantt view). For the configured scene, call with only a fresh requestId. Otherwise supply scenarioId and expectedVersion. For a finished road view, check the same taskId with get_plan while geometry is waiting, queued or running."
     )]
     async fn solve_plan(&self, Parameters(args): Parameters<SolveArgs>) -> CallToolResult {
         let origin = self.origin.clone();
@@ -396,7 +396,7 @@ fn tool_result(result: AppResult<Value>) -> CallToolResult {
 #[tool_handler]
 impl ServerHandler for Planner {
     fn get_info(&self) -> ServerConfig {
-        let instructions = "Use the returned viewUrl exactly as provided and show it as a clickable URL. If the response contains a result or a workbench URL, deliver it directly without get_plan, code execution or local files. Use get_plan for extra details or pending workflows that have no link. A candidate becomes effective only after the human explicitly approves it. Then call adopt_plan for that exact candidate and return the published version and link. On conflict ask for a fresh review.";
+        let instructions = "Use the returned viewUrl exactly as provided. For a scheduling summary, return the available result or clickable link directly. For a finished road plan, follow the same taskId with get_plan while the solve or geometry is pending. Report geometryState and roadLegs/totalLegs, including partial coverage or failure. For installation and offline map preparation, follow docs/agent-local-quickstart.md. A candidate becomes effective only after the human explicitly approves it. Then call adopt_plan for that exact candidate and return the published version and link. On conflict ask for a fresh review.";
         let instructions = match &self.default_scenario {
             Some(scene) => format!(
                 "已配置工单场景 {} v{}。对‘排一下今天的工单’，直接调用 solve_plan，只填新的 ASCII requestId。\n{instructions}",

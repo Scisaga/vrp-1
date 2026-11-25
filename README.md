@@ -98,7 +98,7 @@ Plans require human confirmation by default. Adoption rechecks completed and in-
 
 Building from source requires a Rust toolchain supporting Edition 2024 and system build tools. Running the service requires no Node.js installation, separate SQLite server, or protoc. The browser interface and frontend libraries are bundled.
 
-For a WorkBuddy prompt, the loopback MCP configuration, and a runnable local example, see the [agent local quick start (中文)](docs/agent-local-quickstart.md).
+Use the agent quick start to run vrp-1 locally, download map packages, and generate a first road-based plan. [Agent local quick start (中文)](docs/agent-local-quickstart.md)
 
 ### First build from source
 

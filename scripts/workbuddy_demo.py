@@ -1,4 +1,4 @@
-"""Prepare and verify the 480-order WorkBuddy trial using the existing Shanghai fixture."""
+"""Run the local road-planning quick start or verify the 480-order WorkBuddy trial."""
 import argparse
 from contextlib import closing, contextmanager
 import hashlib
@@ -10,9 +10,10 @@ import secrets
 import socket
 import sqlite3
 import subprocess
+import sys
 import time
 from urllib.error import HTTPError
-from urllib.parse import urlencode
+from urllib.parse import quote, urlencode
 from urllib.request import ProxyHandler, Request, build_opener
 
 
@@ -129,6 +130,90 @@ class Client:
 
 def state_is_terminal(value):
     return value and value.rsplit("_", 1)[-1] in END_STATES
+
+
+def wait_quickstart_tasks(client, pending, timeout):
+    deadline = time.monotonic() + timeout
+    completed, progress = {}, {}
+    while pending and time.monotonic() < deadline:
+        for label, task_id in list(pending.items()):
+            task = client.api(f"/v1/tasks/{task_id}")
+            state = task.get("state", "TASK_STATE_QUEUED")
+            status = (state, task.get("progress", {}).get("phase", ""))
+            if status != progress.get(label):
+                print(label, task_id, *status, file=sys.stderr, flush=True)
+                progress[label] = status
+            if state_is_terminal(state) or state == "TASK_STATE_PARTIAL":
+                completed[label] = task
+                del pending[label]
+        if pending:
+            time.sleep(2)
+    if pending:
+        raise RuntimeError(f"Map or road tasks are still pending after {timeout}s: {pending}")
+    return completed
+
+
+def quickstart(client, scenario_id, timeout):
+    if timeout <= 0:
+        raise RuntimeError("--timeout must be positive")
+    scene_id = scenario_id or "wb-local-demo"
+    scene_path = f"/v1/scenarios/{quote(scene_id, safe='')}"
+    try:
+        scene = json.loads(client.http(f"{scene_path}/metadata")[0])
+    except HTTPError as error:
+        if scenario_id or error.code != 404:
+            raise
+        from workbench_fixture import workbench_scenario
+
+        fixture = workbench_scenario(scene_id, matrix_ready=False)
+        fixture["request"]["options"]["timeLimitMs"] = "5000"
+        scene = client.api("/v1/scenarios", fixture)
+
+    version = scene["version"]
+    key = hashlib.sha256(f"{scene_id}:{version}".encode()).hexdigest()
+    planning = client.api(f"{scene_path}/geo-plan", {
+        "expectedVersion": version, "idempotencyKey": f"workbuddy-quickstart-{key}",
+    })
+    print(f"Road planning task {planning['id']}", file=sys.stderr, flush=True)
+    context = {"scenarioId": scene_id, "version": version}
+    selection = client.api("/v1/basemaps/selection?" + urlencode({"scenario_id": scene_id, "version": version}))
+    pending = {"road": planning["id"]}
+    if not any(selection.get(field) for field in ("package", "disabled", "custom")):
+        basemap = client.api("/v1/basemap-packages/prepare", {
+            "context": context, "nativeMaxZoom": 14, "automatic": True,
+        })
+        pending["basemap"] = basemap["id"]
+    completed = wait_quickstart_tasks(client, pending, timeout)
+
+    planning = completed["road"]
+    job_id = planning.get("resultJobId")
+    if planning.get("state") != "TASK_STATE_SUCCEEDED" or not job_id:
+        reason = planning.get("error") or planning.get("warnings") or planning.get("state")
+        raise RuntimeError(f"Road planning task {planning['id']}: {reason}")
+
+    result = client.api(f"/v1/jobs/{job_id}/result")
+    geometry = client.api(f"/v1/jobs/{job_id}/geometry")
+    selection = client.api("/v1/basemaps/selection?" + urlencode({"job_id": job_id}))
+    package = selection.get("package", {})
+    road_packages = planning.get("roadPackageIds", [])
+    routes = result.get("routes", [])
+    road_legs = len(geometry.get("legs", []))
+    total_legs = sum(len(route.get("stops", [])) + 1 for route in routes)
+    print(json.dumps({
+        "scenarioId": scene_id, "scenarioVersion": planning.get("resultScenarioVersion"),
+        "planningTaskId": planning["id"], "jobId": job_id,
+        "roadPackageIds": road_packages, "basemapPackageId": package.get("id"),
+        "assigned": sum(len(route.get("stops", [])) for route in routes),
+        "unassigned": len(result.get("unassigned", [])),
+        "roadLegs": road_legs, "totalLegs": total_legs,
+        "viewUrl": f"{client.base}/?view=panel#scene/{quote(scene_id, safe='')}/plans/{job_id}",
+    }, ensure_ascii=False), flush=True)
+    if not road_packages or not road_legs:
+        raise RuntimeError(f"Planning task {planning['id']} has no road segments: {planning.get('warnings', [])}")
+    if not package or selection.get("status") != "ready":
+        basemap = completed.get("basemap", {})
+        reason = basemap.get("error") or selection.get("message") or "check the service map configuration"
+        raise RuntimeError(f"Offline basemap unavailable ({basemap.get('id', 'no download task')}): {reason}")
 
 
 def wait_plan(client, task_id, ticket_id=None):
@@ -477,6 +562,10 @@ def verify_options(client, fixtures, output, args):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     sub = parser.add_subparsers(dest="action", required=True)
+    start = sub.add_parser("quickstart", help="Prepare local maps and verify a road plan from the running service")
+    start.add_argument("--base-url", default="http://127.0.0.1:8080")
+    start.add_argument("--scenario-id", help="Plan an existing scene instead of the 12-order demo")
+    start.add_argument("--timeout", type=int, default=600, help="Maximum background task wait in seconds")
     backup = sub.add_parser("copy", help="SQLite-consistent clone of a prepared service data directory")
     backup.add_argument("--source-data", type=Path, required=True)
     backup.add_argument("--data-dir", type=Path, required=True)
@@ -502,7 +591,12 @@ def main():
         command.add_argument("--wait-for-result", action="store_true", help="Require the first MCP reply to include results")
         command.add_argument("--pinned-scene", action="store_true", help="Verify initial planning using only requestId against the pinned fixture")
     args = parser.parse_args()
-    if args.action == "copy":
+    if args.action == "quickstart":
+        try:
+            quickstart(Client(args.base_url), args.scenario_id, args.timeout)
+        except (RuntimeError, OSError) as error:
+            raise SystemExit(str(error)) from error
+    elif args.action == "copy":
         clone(args.source_data, args.data_dir)
     elif args.action == "prepare":
         prepare(Client(args.base_url), args.fixtures, args.archived_job)
